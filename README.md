@@ -1,2 +1,2 @@
-# ADS-Project
- Langauge with a compiler written purely in Java (Cuz i hate my life).
+# EOY_ADS_PROJECT
+End of year Advanced Data Structure Project

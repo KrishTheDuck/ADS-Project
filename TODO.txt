@@ -1,0 +1,18 @@
+TODO:
+    - Get GITHUB working
+    - Bit-shifting for decimals
+    - Structs
+    - add more functions to lang through FLibMapper
+    - CONDITIONS!!!!
+    - make variable detection not stupid
+
+
+NOTEME:
+ Accomplishments:
+    - March 15, 2021 11:47PM: language works for basic expressions and initializations!
+    - March 17, 2021 9:47PM: Parsers work for all datatypes! (time is coincidence)
+ Thoughts:
+    - If we have a solid StringParser class?
+            why do we need one for chars?
+                we can treat chars as singleton strings
+
