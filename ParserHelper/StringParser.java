@@ -8,8 +8,8 @@ public class StringParser extends Parser {
 
     @Override
     public String b_execute(String a, String b, String binary_operator) {
-        return switch(binary_operator){
-            case "+" -> a+b;
+        return switch (binary_operator) {
+            case "+" -> a + b;
             default -> throw new UnsupportedOperationException("Operator \"" + binary_operator + "\" is unsupported.");
         };
     }

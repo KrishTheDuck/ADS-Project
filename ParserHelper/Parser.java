@@ -13,18 +13,6 @@ import java.util.regex.Pattern;
  */
 public abstract class Parser {
 
-    public abstract String b_execute(String a, String b, String binary_operator);
-
-    public abstract String u_execute(String a, String unary_operator);
-
-    public abstract String[] binary_operators();
-
-    public abstract String[] unary_operators();
-
-    public abstract String binary_regex();
-
-    public abstract String assert_format(String expression);
-
     public static String raw_binary_operators(Parser p) {
         StringBuilder raw = new StringBuilder();
         for (String op : p.binary_operators()) {
@@ -106,4 +94,16 @@ public abstract class Parser {
 
         return statement.substring(f_index, l_index + 1);
     }
+
+    public abstract String b_execute(String a, String b, String binary_operator);
+
+    public abstract String u_execute(String a, String unary_operator);
+
+    public abstract String[] binary_operators();
+
+    public abstract String[] unary_operators();
+
+    public abstract String binary_regex();
+
+    public abstract String assert_format(String expression);
 }

@@ -8,14 +8,13 @@ package Console;
  * Date: 3/2/2021
  */
 public enum Terminal_Commands {
-    help("Produces list of all commands."), run("Runs a program. Syntax: <run> <file_path>"), rnr("Recompile And Run: <run> <source_code_file_path>")
-    ,exit("Exits terminal.");
+    help("Produces list of all commands."), run("Runs a program. Syntax: <run> <file_path>"), rnr("Recompile And Run: <run> <source_code_file_path>"), exit("Exits terminal.");
+
+    private final String description;
 
     Terminal_Commands(String description) {
         this.description = description;
     }
-
-    private final String description;
 
     public String description() {
         return this.description;

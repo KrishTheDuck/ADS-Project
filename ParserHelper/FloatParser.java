@@ -6,16 +6,6 @@ public class FloatParser extends Parser {
 
     public static final String binary_regex = "(?<=(\\^|\\*|\\+)|(?=(\\^|\\*|\\+)))";
 
-    @Override
-    public String b_execute(String a, String b, String binary_operator) {
-        return switch (binary_operator) {
-            case "^" -> Float.toString(pow(a, b));
-            case "*" -> Float.toString(Float.parseFloat(a) * Float.parseFloat(b));
-            case "+" -> Float.toString(Float.parseFloat(a) + Float.parseFloat(b));
-            default -> throw new UnsupportedOperationException("Operator \"" + binary_operator + "\" is unsupported.");
-        };
-    }
-
     private static float pow(String a, String exp) {
         float base = Float.parseFloat(a);
         int exponent = Short.parseShort(exp) - 1;
@@ -28,6 +18,16 @@ public class FloatParser extends Parser {
         }
 
         return ans;
+    }
+
+    @Override
+    public String b_execute(String a, String b, String binary_operator) {
+        return switch (binary_operator) {
+            case "^" -> Float.toString(pow(a, b));
+            case "*" -> Float.toString(Float.parseFloat(a) * Float.parseFloat(b));
+            case "+" -> Float.toString(Float.parseFloat(a) + Float.parseFloat(b));
+            default -> throw new UnsupportedOperationException("Operator \"" + binary_operator + "\" is unsupported.");
+        };
     }
 
     @Override

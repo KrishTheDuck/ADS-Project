@@ -16,6 +16,21 @@ public class IntegerParser extends Parser {
         return true;
     }
 
+    //TODO use quikkmath
+    private static int pow(String b, String exp) {
+        int base = Integer.parseInt(b);
+        int exponent = Short.parseShort(exp) - 1;
+        int ans = base;
+
+        while (exponent > 0) {
+            ans += (base - 1) * (exponent & 1) * ans;
+            exponent >>= 1;
+            base *= base;
+        }
+
+        return ans;
+    }
+
     @Override
     public String b_execute(String a, String b, String binary_operator) {
         return switch (binary_operator) {
@@ -55,19 +70,5 @@ public class IntegerParser extends Parser {
     @Override
     public String assert_format(String expression) {
         return expression.replaceAll("(?<!\\+)-", "+-");
-    }
-    //TODO use quikkmath
-    private static int pow(String b, String exp) {
-        int base = Integer.parseInt(b);
-        int exponent = Short.parseShort(exp) - 1;
-        int ans = base;
-
-        while (exponent > 0) {
-            ans += (base - 1) * (exponent & 1) * ans;
-            exponent >>= 1;
-            base *= base;
-        }
-
-        return ans;
     }
 }

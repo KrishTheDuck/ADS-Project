@@ -27,10 +27,10 @@ import java.io.OutputStream;
  * Date: 3/2/2021
  */
 public final class Terminal extends JFrame {
+    private static BufferedOutputStream nbos; //native buffered output stream
     private JPanel contentPane;
     private JTextField command_input;
     private JTextArea command_output;
-    private static BufferedOutputStream nbos; //native buffered output stream
 
     //set up how the GUI behaves and looks
     public Terminal() {
@@ -91,6 +91,57 @@ public final class Terminal extends JFrame {
 
     //throw away everything and stop the GUI
 
+    public static void println(boolean userPrints, String... s) {
+        try {
+            if (userPrints)
+                for (String str : s)
+                    nbos.write(("$User: " + str + "\n").getBytes());
+            else
+                for (String str : s)
+                    nbos.write(("Console: " + str + "\n").getBytes());
+            nbos.write(10);
+            nbos.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    //parse the entered commands
+    // '!' are the symbols indicating commands are present
+
+    public static void print(boolean userPrints, String... message) {
+        try {
+            if (userPrints)
+                nbos.write("$User: ".getBytes());
+            else
+                nbos.write("Console: ".getBytes());
+
+            for (String str : message)
+                nbos.write(str.getBytes());
+            nbos.write(10);
+            nbos.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Terminal evoke() {
+        Terminal dialog = new Terminal();
+        dialog.pack();
+        dialog.setVisible(true);
+        dialog.command_output.setText("Terminal Commands...\n");
+        nbos = new BufferedOutputStream(new JTextAreaOutputStream(dialog.command_output));
+        return dialog;
+    }
+
+    //works in tandem with parse to print out to the console when the file exists
+    //will eventually hand over operations to the Compiler class which will check for syntax
+
+    //start up this shit my boy
+    public static void main(String... args) {
+        evoke();
+    }
+    ////See the Terminal_Commands enumeration to see all supported commands
+
     private void onCancel() {
         try {
             nbos.close();
@@ -99,8 +150,6 @@ public final class Terminal extends JFrame {
 
         dispose();
     }
-    //parse the entered commands
-    // '!' are the symbols indicating commands are present
 
     private String parse(String[] args) {
         char operator = args[0].charAt(0); //stores operator
@@ -124,9 +173,6 @@ public final class Terminal extends JFrame {
         return "Exiting";
     }
 
-    //works in tandem with parse to print out to the console when the file exists
-    //will eventually hand over operations to the Compiler class which will check for syntax
-
     private String execute(String path, boolean shouldReCompile) {
         //!run <file_path>
         File file = new File(path);
@@ -147,7 +193,6 @@ public final class Terminal extends JFrame {
         }
         return "file not found!";
     }
-    ////See the Terminal_Commands enumeration to see all supported commands
 
     private String print_commands() {
         StringBuilder sb = new StringBuilder();
@@ -155,52 +200,6 @@ public final class Terminal extends JFrame {
             sb.append(cmd).append(">>").append(cmd.description()).append("\n"); // command>>description
         }
         return sb.toString();
-    }
-
-    public static void println(boolean userPrints, String... s) {
-        try {
-            if (userPrints)
-                for (String str : s)
-                    nbos.write(("$User: " + str + "\n").getBytes());
-            else
-                for (String str : s)
-                    nbos.write(("Console: " + str + "\n").getBytes());
-            nbos.write(10);
-            nbos.flush();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void print(boolean userPrints, String... message) {
-        try {
-            if (userPrints)
-                nbos.write("$User: ".getBytes());
-            else
-                nbos.write("Console: ".getBytes());
-
-            for (String str : message)
-                nbos.write(str.getBytes());
-            nbos.write(10);
-            nbos.flush();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    public static Terminal evoke() {
-        Terminal dialog = new Terminal();
-        dialog.pack();
-        dialog.setVisible(true);
-        dialog.command_output.setText("Terminal Commands...\n");
-        nbos = new BufferedOutputStream(new JTextAreaOutputStream(dialog.command_output));
-        return dialog;
-    }
-
-    //start up this shit my boy
-    public static void main(String... args) {
-        evoke();
     }
 
     private static class JTextAreaOutputStream extends OutputStream {

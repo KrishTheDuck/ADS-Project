@@ -1,7 +1,5 @@
 package Kernel.RuntimeManipulation;
 
-import java.util.List;
-
 //todo when sealed types come out seal rm with rvm and all others
 public interface RuntimeManipulation {
     void commit(String name, String... properties) throws Exception;

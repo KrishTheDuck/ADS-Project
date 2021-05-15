@@ -6,6 +6,20 @@ public class LongParser extends Parser {
 
     public static final String binary_regex = "(?<=((<<)|(>>)|^|\\*|\\+)|(?=((<<)|(>>)|^|\\*|\\+)))";
 
+    private static long pow(String b, String exp) {
+        long base = Long.parseLong(b);
+        int exponent = Short.parseShort(exp) - 1;
+        long ans = base;
+
+        while (exponent > 0) {
+            ans += (base - 1) * (exponent & 1) * ans;
+            exponent >>= 1;
+            base *= base;
+        }
+
+        return ans;
+    }
+
     @Override
     public String b_execute(String a, String b, String binary_operator) {
         return switch (binary_operator) {
@@ -45,20 +59,6 @@ public class LongParser extends Parser {
     @Override
     public String assert_format(String expression) {
         return expression.replaceAll("(?<!\\+)-", "+-");
-    }
-
-    private static long pow(String b, String exp) {
-        long base = Long.parseLong(b);
-        int exponent = Short.parseShort(exp) - 1;
-        long ans = base;
-
-        while (exponent > 0) {
-            ans += (base - 1) * (exponent & 1) * ans;
-            exponent >>= 1;
-            base *= base;
-        }
-
-        return ans;
     }
 
 }

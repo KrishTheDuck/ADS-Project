@@ -18,10 +18,8 @@ import java.util.Map;
 public final class RuntimeVariableManipulation implements RuntimeManipulation {
 
 
-    private static Map<String, String[]> rvm_map; //name, properties:[extra keyword?, struct/datatype?, if struct parameters?, value]
-
-
     private static final int RVM_PROPERTIES_LENGTH = 3; //varname: [properties, datatype, value]
+    private static Map<String, String[]> rvm_map; //name, properties:[extra keyword?, struct/datatype?, if struct parameters?, value]
 
     private RuntimeVariableManipulation(Map<String, String[]> rvm_map) {
         RuntimeVariableManipulation.rvm_map = rvm_map;
@@ -29,6 +27,10 @@ public final class RuntimeVariableManipulation implements RuntimeManipulation {
 
     public RuntimeVariableManipulation() {
         rvm_map = new HashMap<>();
+    }
+
+    public static RuntimeVariableManipulation RVM() {
+        return new RuntimeVariableManipulation(rvm_map);
     }
 
     /**
@@ -89,13 +91,8 @@ public final class RuntimeVariableManipulation implements RuntimeManipulation {
         return rvm_map.containsKey(name);
     }
 
-
     @Override
     public String toString() {
         return rvm_map.toString();
-    }
-
-    public static RuntimeVariableManipulation RVM() {
-        return new RuntimeVariableManipulation(rvm_map);
     }
 }

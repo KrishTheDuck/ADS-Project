@@ -20,8 +20,8 @@ public final class QuickMath {
     public final static float PI = 3.1415926535f;
     public final static float E = 2.718281f;
     public final static float LN2 = 0.6931471806f;
-    private final static int DEFAULT_ACCURACY = 10;
     public final static float sqrt2 = 1.41421356237f;
+    private final static int DEFAULT_ACCURACY = 10;
 
     private QuickMath() {
     }

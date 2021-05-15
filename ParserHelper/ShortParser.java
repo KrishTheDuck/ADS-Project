@@ -6,6 +6,20 @@ public class ShortParser extends Parser {
 
     public static final String binary_regex = "(?<=((<<)|(>>)|^|\\*|\\+)|(?=((<<)|(>>)|^|\\*|\\+)))";
 
+    private static short pow(String b, String exp) {
+        short base = Short.parseShort(b);
+        short exponent = (short) (Short.parseShort(exp) - 1);
+        short ans = base;
+
+        while (exponent > 0) {
+            ans += (base - 1) * (exponent & 1) * ans;
+            exponent >>= 1;
+            base *= base;
+        }
+
+        return ans;
+    }
+
     @Override
     public String b_execute(String a, String b, String binary_operator) {
         return switch (binary_operator) {
@@ -45,19 +59,5 @@ public class ShortParser extends Parser {
     @Override
     public String assert_format(String expression) {
         return expression.replaceAll("(?<!\\+)-", "+-");
-    }
-
-    private static short pow(String b, String exp) {
-        short base = Short.parseShort(b);
-        short exponent = (short) (Short.parseShort(exp) - 1);
-        short ans = base;
-
-        while (exponent > 0) {
-            ans += (base - 1) * (exponent & 1) * ans;
-            exponent >>= 1;
-            base *= base;
-        }
-
-        return ans;
     }
 }
