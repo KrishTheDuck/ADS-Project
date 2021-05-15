@@ -1,4 +1,4 @@
-package EOY_ADS_PROJECT.LanguageExceptions;
+package LanguageExceptions;
 
 /**
  * Signals that an a variable, which does not exist or no longer exists, is trying to be operated upon.

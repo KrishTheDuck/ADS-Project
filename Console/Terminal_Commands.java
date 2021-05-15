@@ -1,4 +1,4 @@
-package EOY_ADS_PROJECT.Console;
+package Console;
 
 /**
  * Enumeration that describes all commands and descriptions allowed in the Console.

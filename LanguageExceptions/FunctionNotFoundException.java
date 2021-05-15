@@ -1,7 +1,7 @@
-package EOY_ADS_PROJECT.LanguageExceptions;
+package LanguageExceptions;
 
 /**
- * Signals that called function is not only not defined in the function, but also not defined in the {@code {@linkplain EOY_ADS_PROJECT.FunctionLibrary}} package
+ * Signals that called function is not only not defined in the function, but also not defined in the {@code {@linkplain FunctionLibrary}} package
  *
  * @author Krish Sridhar
  * Date: 3/16/2021

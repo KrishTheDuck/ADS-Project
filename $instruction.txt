@@ -1,0 +1,19 @@
+mal int a  10
+mal int b  0
+set b  !b
+set a  122
+mal int c  a*20+10*200
+mal int d  (++a)*100+20
+mal bool e  !true
+chk a > 10
+	set b  10
+	set a  10
+	set d  10
+	chk b+a > 10
+		set c  c/10
+		end chk
+	rslv
+		set d  d+c
+		end rslv
+	end chk
+call stdio pvars " " a b c d e 

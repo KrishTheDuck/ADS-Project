@@ -1,7 +1,7 @@
-package EOY_ADS_PROJECT.FunctionLibrary;
+package FunctionLibrary;
 
-import EOY_ADS_PROJECT.LanguageExceptions.FunctionNotFoundException;
-import EOY_ADS_PROJECT.LanguageExceptions.LibraryNotFoundException;
+import LanguageExceptions.FunctionNotFoundException;
+import LanguageExceptions.LibraryNotFoundException;
 
 //NOTEME for void functions return true, else return the value (boxing is fine even though its expensive worry about optimizations later)
 public final class FLibMapper {

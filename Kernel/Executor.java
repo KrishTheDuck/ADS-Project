@@ -1,9 +1,8 @@
-package EOY_ADS_PROJECT.Compiler.Kernel;
+package Kernel;
 
-
-import EOY_ADS_PROJECT.Compiler.ParserHelper.*;
-import EOY_ADS_PROJECT.FunctionLibrary.FLibMapper;
-import EOY_ADS_PROJECT.LanguageExceptions.NonExistentVariableException;
+import FunctionLibrary.FLibMapper;
+import Kernel.RuntimeManipulation.RuntimeVariableManipulation;
+import ParserHelper.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -17,7 +16,7 @@ import java.util.regex.Pattern;
  * Executes instruction file.
  *
  * @author Krish Sridhar, Kevin Wang
- * @see EOY_ADS_PROJECT.Compiler
+ * @see Kernel.Compiler
  * @since 1.0
  */
 //TODO one day. not today. not this year. but one day. we need to implement a branch prediction algorithm. This will be the hardest fucking thing you've ever done.
@@ -59,8 +58,6 @@ public final class Executor {
                             params[0] = "null";
 
                             if (terms.length - 3 >= 0) System.arraycopy(terms, 3, params, 2, terms.length - 3);
-
-                            rvm.commit_SL(terms[2], params);
                         }
                         case "QUEUE", "STACK" -> {
 
@@ -72,7 +69,7 @@ public final class Executor {
                 case "SET" -> {// sets a value
                     String varname = terms[1];
                     String value = terms[terms.length - 1];
-                    rvm.setValue(varname, EvaluateExpression(value, rvm.getDatatype(varname), rvm));
+                    rvm.set("value", varname, EvaluateExpression(value, rvm.fetch(varname)[1], rvm));
                 }
                 //CREATE <datatype> <varname> TO EXECUTE/METHOD <expression>
                 case "CREATE" -> { //attempts to create a value in a scope
@@ -112,7 +109,7 @@ public final class Executor {
         System.out.println("Instruction stack: " + rvm);
     }
 
-    private static String EvaluateExpression(String expression, String datatype, RuntimeVariableManipulation rvm) throws NonExistentVariableException {
+    private static String EvaluateExpression(String expression, String datatype, RuntimeVariableManipulation rvm) throws Exception {
         System.out.println("Expression detected: " + expression);
         Parser eval;
         //switch vars with values and update accordingly
@@ -131,30 +128,30 @@ public final class Executor {
                 String op$ = expression.charAt(index - 1) + "" + expression.charAt(index - 2);//operator before
                 switch (op$) {//increment then use
                     case "++" -> {
-                        rvm.setValue(var, parseFrom(datatype, rvm.getValue(var), 1));
-                        expression = expression.replace(op$ + "" + var, rvm.getValue(var));
+                        rvm.set("value", var, parseFrom(datatype, rvm.get("value", var), 1));
+                        expression = expression.replace(op$ + "" + var, rvm.get("value", var));
                     }
                     case "--" -> {
-                        rvm.setValue(var, parseFrom(datatype, rvm.getValue(var), -1));
-                        expression = expression.replace(op$ + "" + var, rvm.getValue(var));
+                        rvm.set("value", var, parseFrom(datatype, rvm.get("value", var), -1));
+                        expression = expression.replace(op$ + "" + var, rvm.get("value", var));
                     }
                     default -> { //use then increment
                         op$ = expression.charAt(index + 1) + "" + expression.charAt(index + 2);
                         switch (op$) {
                             case "++" -> {
-                                expression = expression.replace(var + "" + op$, rvm.getValue(var));
-                                rvm.setValue(var, String.valueOf(Integer.parseInt(rvm.getValue(var)) + 1));
+                                expression = expression.replace(var + "" + op$, rvm.get("value", var));
+                                rvm.set("value", var, String.valueOf(Integer.parseInt(rvm.get("value", var)) + 1));
                             }
                             case "--" -> {
-                                expression = expression.replace(var + "" + op$, rvm.getValue(var));
-                                rvm.setValue(var, parseFrom(datatype, rvm.getValue(var), -1));
+                                expression = expression.replace(var + "" + op$, rvm.get("value", var));
+                                rvm.set("value", var, parseFrom(datatype, rvm.get("value", var), -1));
                             }
-                            default -> expression = expression.replace(var, rvm.getValue(var)); //no incrementer
+                            default -> expression = expression.replace(var, rvm.get("value", var)); //no incrementer
                         }
                     }
                 }
             } else {
-                expression = expression.replace(var, rvm.getValue(var));
+                expression = expression.replace(var, rvm.get("value", var));
             }
         }
 

@@ -1,4 +1,4 @@
-package EOY_ADS_PROJECT.Compiler.ParserHelper;
+package ParserHelper;
 
 //TODO FIXME consider order of operations for binary and unary operators
 public class IntegerParser extends Parser {

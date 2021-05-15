@@ -1,4 +1,4 @@
-package EOY_ADS_PROJECT.LanguageExceptions;
+package LanguageExceptions;
 
 /**
  * Signals that an overlap has occurred when committing two structs of the same name and parameters.

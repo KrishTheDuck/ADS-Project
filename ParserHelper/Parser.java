@@ -1,4 +1,4 @@
-package EOY_ADS_PROJECT.Compiler.ParserHelper;
+package ParserHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;

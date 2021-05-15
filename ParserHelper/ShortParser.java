@@ -1,4 +1,4 @@
-package EOY_ADS_PROJECT.Compiler.ParserHelper;
+package ParserHelper;
 
 public class ShortParser extends Parser {
     public static final String[] binary_operators = {"^", "*", "+", ">>", "<<"};

@@ -1,7 +1,7 @@
-package EOY_ADS_PROJECT.FunctionLibrary;
+package FunctionLibrary;
 
-import EOY_ADS_PROJECT.Compiler.Kernel.RuntimeVariableManipulation;
-import EOY_ADS_PROJECT.Console.Terminal;
+import Console.Terminal;
+import Kernel.RuntimeManipulation.RuntimeVariableManipulation;
 
 import java.util.Arrays;
 
@@ -9,7 +9,7 @@ import java.util.Arrays;
  * Controls basic I/O functions.
  *
  * @author Krish Sridhar, Kevin Wang
- * @see EOY_ADS_PROJECT.FunctionLibrary
+ * @see FunctionLibrary
  */
 public final class StandardIO {
     public static void printReplaceVars(String[] message) {
@@ -29,7 +29,7 @@ public final class StandardIO {
         StringBuilder f_message = new StringBuilder();
         try {
             for (int i = 1, n = message.length; i < n; i++) {
-                f_message.append(rvm.getValue(message[i].strip())).append(delimiter);
+                f_message.append(rvm.fetch(message[i].strip())[2]).append(delimiter);
             }
         } catch (Exception e) {
             Terminal.print(false, message);

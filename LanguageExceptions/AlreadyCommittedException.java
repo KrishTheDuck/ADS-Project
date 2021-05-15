@@ -1,4 +1,4 @@
-package EOY_ADS_PROJECT.LanguageExceptions;
+package LanguageExceptions;
 
 /**
  * Signals that an overlap has occurred where two variables of the exact same scope and name is being added.

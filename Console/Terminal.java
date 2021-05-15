@@ -1,7 +1,7 @@
-package EOY_ADS_PROJECT.Console;
+package Console;
 
-import EOY_ADS_PROJECT.Compiler.Kernel.Compiler;
-import EOY_ADS_PROJECT.Compiler.Kernel.Executor;
+import Kernel.Compiler;
+import Kernel.Executor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +21,7 @@ import java.io.OutputStream;
  * </p>
  *
  * @author Krish Sridhar, Kevin Wang
- * @see Terminal_Commands
+ * @see Console.Terminal_Commands
  * @see Compiler
  * @since 1.0
  * Date: 3/2/2021
@@ -79,9 +79,9 @@ public final class Terminal extends JFrame {
 
     public static String readInput(Terminal t) {
         final String[] input = new String[1];
-        t.command_input.addKeyListener(new KeyAdapter(){
-            public void keyPressed(KeyEvent e){
-                if(e.getKeyCode() == KeyEvent.VK_ENTER){
+        t.command_input.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     input[0] = t.command_input.getText();
                 }
             }

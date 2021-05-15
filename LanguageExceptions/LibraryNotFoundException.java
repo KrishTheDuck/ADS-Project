@@ -1,7 +1,7 @@
-package EOY_ADS_PROJECT.LanguageExceptions;
+package LanguageExceptions;
 
 /**
- * Signals that the called library has not been added to {@code {@linkplain EOY_ADS_PROJECT.FunctionLibrary}}
+ * Signals that the called library has not been added to {@code {@linkplain FunctionLibrary}}
  *
  * @author Krish Sridhar
  * Date: 3/16/2021

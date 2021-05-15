@@ -1,4 +1,4 @@
-package EOY_ADS_PROJECT.FunctionLibrary;
+package FunctionLibrary;
 
 /**
  * Basic mathematical function and operation library optimized for faster start-up times and higher consistency.
