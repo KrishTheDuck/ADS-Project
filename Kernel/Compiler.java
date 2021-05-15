@@ -1,9 +1,14 @@
-package Kernel;
+package EOY_ADS_PROJECT.Compiler.Kernel;
+
+import EOY_ADS_PROJECT.Compiler.ParserHelper.IntegerParser;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.Executor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Takes in a file path, compiles instructions, creates a variable control JSON file, creates a instruction file preserving order of insertion.
@@ -21,30 +26,34 @@ import java.util.concurrent.Executor;
  */
 @SuppressWarnings("unused")
 public final class Compiler {
-    private File src_code;
-    private File inf_code;
-    private final static char comment_marker = '#';
-
+    private File program_file;
     public final static String op_t = "<>";
 
     public Compiler(File program_file) throws FileNotFoundException {
         if (program_file.exists()) {
             if (program_file.canRead()) {
                 //TODO register file types and check if they correct
-                this.src_code = program_file;
-                this.inf_code = new File("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$instruction.txt");
+                this.program_file = program_file;
             }
         } else {
             throw new FileNotFoundException();
         }
     }
 
-    private void normalize(StringBuilder file) throws IOException {
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(src_code));//read in file and store
+    public File compile() throws Exception {
+        StringBuilder file = new StringBuilder(); //store in a string
+
+        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(program_file));//read in file and store
         char prev_char = (char) bis.read();
         char c;
+        //normalizing source code
+        /*
+         * comment
+         * code
+         * code comment
+         * */
         while ((c = (char) bis.read()) != '\uFFFF') {
-            if (prev_char == comment_marker) { //comment marker
+            if (prev_char == '#') { //comment marker
                 do {
                     prev_char = (char) bis.read();
                 } while (prev_char != '\n');
@@ -60,170 +69,50 @@ public final class Compiler {
         }
         bis.close();
 
-    }
+        File i_file = new File("instruction.txt"); //create instruction file
 
-    private void register_components(List<ArrayList<String>> methods, StringBuilder file) {
+        if (!i_file.exists()) {
+            if (!i_file.createNewFile())
+                throw new Exception("Instruction file creation failed.");
+        } else {
+            System.out.println("file exists at: " + i_file.getAbsolutePath());
+        }
+
+        System.out.println("This is the normalized file: "+file);
+
         StringTokenizer method_tokenizer = new StringTokenizer(file.toString(), "$"); //universal String Tokenizer object
+        List<ArrayList<String>> methods = new ArrayList<>(); //stores most important parts of method (return type, method name, parameters, method body)
+
         while (method_tokenizer.hasMoreTokens()) {
             String method, return_type, method_name, method_body;
             String[] params;
             method = method_tokenizer.nextToken().strip();
-            System.out.println("Method: " + method);
             return_type = method.substring(0, method.indexOf(" ")).strip();
-            System.out.println("Return_type: " + return_type);
-            method_name = (!return_type.equals("DEFINE") ? method.substring(method.indexOf(" "), method.indexOf("(")).strip() :
-                    method.substring(method.indexOf(" "), method.indexOf("->"))).strip();
+            method_name = method.substring(method.indexOf(" "), method.indexOf("(")).strip();
 
-            System.out.println("Method name: " + method_name);
-
-            if (return_type.equals("DEFINE")) {
-                method_body = method.substring(method.indexOf("->"));
+            if (return_type.equals("struct") && method.endsWith(";")) {
+                method_body = "";
             } else {
                 method_body = method.substring(method.indexOf("{") + 1, method.lastIndexOf("}"));
             }
 
-            params = (!return_type.equals("DEFINE")) ? method.substring(method.indexOf("(") + 1, method.indexOf(")")).split(",") : new String[0];
+            params = method.substring(method.indexOf("(") + 1, method.indexOf(")")).split(",");
+            System.out.printf("Method: %s\nReturn Type: %s\nMethod Name: %s\nParameters: %s\n", method, return_type, method_name, Arrays.toString(params));
             System.out.println("-----------------");
 
             methods.add(new ArrayList<>(Arrays.asList(method_name, Arrays.toString(params), return_type, method_body)));
         }
-    }
 
-    private Queue<String> stream(String method_body) throws IOException {
-        BufferedInputStream bis = new BufferedInputStream(new ByteArrayInputStream(method_body.getBytes(StandardCharsets.UTF_8)));
+        //NOTEME method name, parameters, return type, method body
 
-        Queue<String> list = new LinkedList<>();
-        Stack<String> scopes = new Stack<>();
+        //FIXME CANNOT UNWRAP METHODS AS IT WILL BECOME INFINITE WHEN RECURSION IS DETECTED!!!!!
+        // - Solution: don't unwrap method calls leave em as is and compile when needed
 
-        char i;
-        String scope;
-        StringBuilder acc = new StringBuilder();
-        while ((i = (char) bis.read()) != '\uFFFF') {
-            switch (i) {
-                case '{', ';' -> {
-                    if (acc.toString().strip().startsWith("if")) {
-                        scope = "end if";
-                        scopes.push(scope);
-                    } else if (acc.toString().strip().startsWith("else")) {
-                        scope = "end else";
-                        scopes.push(scope);
-                    } else if (acc.toString().strip().startsWith("else if")) {
-                        scope = "end elif";
-                        scopes.push(scope);
-                    }
-                    list.add(acc.toString());
-                    acc.delete(0, acc.length());
-                }
-                case '}' -> list.add(scopes.pop());
-                default -> acc.append(i);
-            }
-        }
-        return list;
-    }
-
-    public File compile() throws Exception {
-        StringBuilder file = new StringBuilder(); //store in a string
-        normalize(file);
+        //compilation
+        System.out.println("\n\nUnwrapping methods...\n\n");
 
 
-        if (!this.inf_code.exists()) {
-            if (!this.inf_code.createNewFile())
-                throw new Exception("Instruction file creation failed.");
-        } else {
-            System.out.println("file exists at: " + this.inf_code.getAbsolutePath());
-        }
-
-        System.out.println("This is the normalized file: " + file);
-
-        List<ArrayList<String>> methods = new ArrayList<>(); //stores most important parts of method (return type, method name, parameters, method body)
-        register_components(methods, file);
-
-        System.out.println("\nUnwrapping methods...\n");
-
-        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(inf_code));
-        //todo finish statement wise stream
-
-        Queue<String> instructions = stream(methods.get(indexOfMain(methods)).get(3));
-        int tab = 0;
-        System.out.println(instructions);
-        while (instructions.size() > 0) {
-            String[] lhs;
-            String rhs;
-            String opcode;
-            String instruction = instructions.remove().strip();
-
-            for (int i = 0; i < tab; i++) {
-                bos.write(9);
-            }
-
-            //instruction: opcode lhs rhs
-            if (instruction.contains("=")) {
-                rhs = instruction.substring(instruction.indexOf("=") + 1).strip();
-                lhs = instruction.substring(0, instruction.indexOf("=")).strip().split("[ ]+");
-                opcode = (lhs.length >= 2) ? "mal" : "set";
-                instruction = opcode + " " + ARR_TO_STR(lhs) + " " + rhs;
-            } else if (instruction.startsWith("if") || instruction.startsWith("else if")) {
-                ++tab;
-                opcode = "chk";
-                rhs = instruction.substring(instruction.indexOf("(") + 1, instruction.indexOf(")"));
-                instruction = opcode + " " + rhs;
-            } else if (instruction.startsWith("else")) {
-                ++tab;
-                opcode = "rslv";
-                instruction = opcode;
-            } else if (instruction.startsWith("end")) {
-                --tab;
-                instruction = (instruction.endsWith("if")) ? "end chk" : "end rslv";
-            } else if (instruction.contains(".")) {
-                opcode = "call";
-                lhs = instruction.substring(instruction.indexOf("(") + 1, instruction.indexOf(")")).split(",");
-                rhs = instruction.substring(instruction.indexOf(".") + 1, instruction.indexOf("("));
-                String function = instruction.substring(0, instruction.indexOf("."));
-                instruction = opcode + " " + function + " " + rhs + " " + ARR_TO_STR(lhs);
-            }
-
-            bos.write(instruction.getBytes());
-            bos.write(10);
-        }
-        bos.flush();
-
-
-        return this.inf_code;
-    }
-
-    private static <T> String ARR_TO_STR(T[] arr) {
-        StringBuilder sb = new StringBuilder();
-        for (T element : arr) {
-            sb.append(element.toString()).append(" ");
-        }
-        return sb.toString();
-    }
-
-    private int indexOfMain(List<ArrayList<String>> methods) {
-        int index = 0;
-        for (ArrayList<String> method : methods) {
-            if (method.get(0).equals("main"))
-                return index;
-            ++index;
-        }
-        return -1;
-    }
-
-    private Compiler() {
-    }
-
-    public static void main(String... args) throws Exception {
-//        Terminal t = Terminal.evoke();
-        Compiler c = new Compiler(new File("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$Input.txt"));
-        File f = c.compile();
-//        Executor.execute(new File("C:\\Users\\srikr\\Desktop\\Programs\\ADS\\$instruction.txt"));
-//        System.out.println(Arrays.toString(" ".getBytes()));
-    }
-}
-//Test
-
-/*
-*
+        //NOTEME really fucking annoying-to-code compilation. all this does is check every condition lazily. please please please please make this better.
         for (ArrayList<String> method_properties : methods) {
             String line;
             String datatype, varname;
@@ -321,7 +210,7 @@ public final class Compiler {
 
         //write to file
         int index = indexOfMain(methods);
-        BufferedOutputStream fos = new BufferedOutputStream(new FileOutputStream(this.inf_code));
+        BufferedOutputStream fos = new BufferedOutputStream(new FileOutputStream(i_file));
         method_tokenizer = new StringTokenizer(methods.get(index).get(3), "\n", true);
 
         //compile structs first
@@ -348,5 +237,30 @@ public final class Compiler {
         fos.flush();
 
         fos.close();
-*
-* */
+        return i_file;
+    }
+
+
+    private int indexOfMain(List<ArrayList<String>> methods) {
+        int index = 0;
+        for (ArrayList<String> method : methods) {
+            if (method.get(0).equals("main"))
+                return index;
+            ++index;
+        }
+        return -1;
+    }
+
+    private Compiler() {
+    }
+
+    /*NOTEME we need to pass in Terminal instance to Executor through some kind of method or instruction as "read" will not be possible
+     *  or we could create a command in i_file that evokes the Terminal. Either one idk.*/
+    public static void main(String... args) throws Exception {
+//        Terminal t = Terminal.evoke();
+        Compiler c = new Compiler(new File("C:\\Users\\srikr\\Desktop\\Programs\\ADS\\src\\main\\java\\EOY_ADS_PROJECT\\$Input.txt"));
+        File f = c.compile();
+//        Executor.execute(new File("C:\\Users\\srikr\\Desktop\\Programs\\ADS\\instruction.txt"));
+    }
+}
+//Test
