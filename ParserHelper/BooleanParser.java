@@ -4,7 +4,7 @@ public class BooleanParser extends Parser {
     public static final String[] binary_operators = {"&&", "||"};
     public static final String[] unary_operators = {"!"};
 
-    public static final String binary_regex = "(?<=((\\|\\|)|&&)|(?=((\\|\\|)|&&)))";
+    public static final String binary_regex = "(?<=(|||&&)|(?=((||)|&&)))";
 
     @Override
     public String b_execute(String a, String b, String binary_operator) {

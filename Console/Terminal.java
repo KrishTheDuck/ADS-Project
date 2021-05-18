@@ -1,7 +1,6 @@
 package Console;
 
 import Kernel.Compiler;
-import Kernel.Executor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -182,9 +181,9 @@ public final class Terminal extends JFrame {
                 if (shouldReCompile) {
                     Compiler c = new Compiler(file);
                     File instruction_file = c.compile();
-                    Executor.execute(instruction_file);
+//                    Executor.execute(instruction_file);
                 } else {
-                    Executor.execute(file);
+//                    Executor.execute(file);
                 }
             } catch (Exception e) {
                 print(false, e.toString());

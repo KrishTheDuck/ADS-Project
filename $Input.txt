@@ -1,18 +1,14 @@
-# '~>' operator indicates method should store result in the left-hand side var
-# orange
-
-$ DEFINE procedure -> 1
+# Test code for 5.16.2021
+# Testing reading and execution of conditional branches through AbstractSyntaxTree
 
 $ int main(){
-    int a = 10;
-    int b = 0;
-    b = !b;
-    a = 122;
+    # initialize a block of variables
+    int a = 100;
+    int b = 200;
+    int c = 300;
+    int d = 400;
 
-    int c = a*20+10*200;
-    int d = (++a)*100+20;
-    bool e = !true;
-
+    # "rigorous" testing
     if(a > 10) {
         b = 10;
         a = 10;
@@ -22,6 +18,22 @@ $ int main(){
         }else {
             d = d+c;
         }
+        c = 100;
+    }else if(a < 5){
+        if(a+b > 200){
+            if(c > 300){
+                d = 10;
+            }
+            c = 100;
+        }else if (b < 100){
+            d = 200;
+        }
+    }else {
+        a = b+a;
     }
-    stdio.pvars(" ",a,b,c,d,e);
+
+    # checking result tally
+    int e = a + b + c + d;
+
+    # print here?
 }

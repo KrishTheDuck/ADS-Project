@@ -17,9 +17,18 @@ import java.util.*;
  */
 @SuppressWarnings("unused")
 public final class Compiler {
-    public final static String op_t = "<>";
+    public final static String tknzr = "  ";
     private final static char comment_marker = '#';
     private File src_code;
+
+    public static void main(String... args) throws Exception {
+//        Terminal t = Terminal.evoke();
+        Compiler c = new Compiler(new File("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$Input.txt"));
+        File f = c.compile();
+        System.out.println("Compilation finished. Beginning Execution.");
+        Executor.InstructionLoader("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$instruction.txt");
+    }
+
     private File inf_code;
 
     public Compiler(File program_file) throws FileNotFoundException {
@@ -37,20 +46,13 @@ public final class Compiler {
     private Compiler() {
     }
 
+    //fixme for some reason the tknzr is creating 4 space between the value and variable
     private static <T> String ARR_TO_STR(T[] arr) {
         StringBuilder sb = new StringBuilder();
         for (T element : arr) {
-            sb.append(element.toString()).append(" ");
+            sb.append(element.toString()).append(tknzr);
         }
         return sb.toString();
-    }
-
-    public static void main(String... args) throws Exception {
-//        Terminal t = Terminal.evoke();
-        Compiler c = new Compiler(new File("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$Input.txt"));
-        File f = c.compile();
-//        Executor.execute(new File("C:\\Users\\srikr\\Desktop\\Programs\\ADS\\$instruction.txt"));
-//        System.out.println(Arrays.toString(" ".getBytes()));
     }
 
     private void normalize(StringBuilder file) throws IOException {
@@ -85,20 +87,11 @@ public final class Compiler {
             System.out.println("Method: " + method);
             return_type = method.substring(0, method.indexOf(" ")).strip();
             System.out.println("Return_type: " + return_type);
-            method_name = (!return_type.equals("DEFINE") ? method.substring(method.indexOf(" "), method.indexOf("(")).strip() :
-                    method.substring(method.indexOf(" "), method.indexOf("->"))).strip();
-
+            method_name = method.substring(method.indexOf(" "), method.indexOf("(")).strip();
             System.out.println("Method name: " + method_name);
-
-            if (return_type.equals("DEFINE")) {
-                method_body = method.substring(method.indexOf("->"));
-            } else {
-                method_body = method.substring(method.indexOf("{") + 1, method.lastIndexOf("}"));
-            }
-
-            params = (!return_type.equals("DEFINE")) ? method.substring(method.indexOf("(") + 1, method.indexOf(")")).split(",") : new String[0];
+            method_body = method.substring(method.indexOf("{") + 1, method.lastIndexOf("}"));
+            params = method.substring(method.indexOf("(") + 1, method.indexOf(")")).split(",");
             System.out.println("-----------------");
-
             methods.add(new ArrayList<>(Arrays.asList(method_name, Arrays.toString(params), return_type, method_body)));
         }
     }
@@ -118,11 +111,11 @@ public final class Compiler {
                     if (acc.toString().strip().startsWith("if")) {
                         scope = "end if";
                         scopes.push(scope);
-                    } else if (acc.toString().strip().startsWith("else")) {
-                        scope = "end else";
-                        scopes.push(scope);
                     } else if (acc.toString().strip().startsWith("else if")) {
                         scope = "end elif";
+                        scopes.push(scope);
+                    } else if (acc.toString().strip().startsWith("else")) {
+                        scope = "end else";
                         scopes.push(scope);
                     }
                     list.add(acc.toString());
@@ -174,26 +167,35 @@ public final class Compiler {
             if (instruction.contains("=")) {
                 rhs = instruction.substring(instruction.indexOf("=") + 1).strip();
                 lhs = instruction.substring(0, instruction.indexOf("=")).strip().split("[ ]+");
-                opcode = (lhs.length >= 2) ? "mal" : "set";
-                instruction = opcode + " " + ARR_TO_STR(lhs) + " " + rhs;
+
+                if (lhs.length >= 2) {
+                    opcode = "mal";
+                    lhs[1] = "main." + lhs[1].strip();
+                } else {
+                    opcode = "set";
+                    lhs[0] = "main." + lhs[0].strip();
+                }
+
+
+                instruction = opcode + tknzr + ARR_TO_STR(lhs) + rhs;
             } else if (instruction.startsWith("if") || instruction.startsWith("else if")) {
                 ++tab;
-                opcode = "chk";
+                opcode = (instruction.startsWith("else if")) ? "echk" : "chk";
                 rhs = instruction.substring(instruction.indexOf("(") + 1, instruction.indexOf(")"));
-                instruction = opcode + " " + rhs;
+                instruction = opcode + tknzr + rhs;
             } else if (instruction.startsWith("else")) {
                 ++tab;
                 opcode = "rslv";
                 instruction = opcode;
             } else if (instruction.startsWith("end")) {
                 --tab;
-                instruction = (instruction.endsWith("if")) ? "end chk" : "end rslv";
+                instruction = (instruction.endsWith("elif")) ? "end echk" : (instruction.endsWith("if")) ? "end chk" : "end rslv";
             } else if (instruction.contains(".")) {
                 opcode = "call";
                 lhs = instruction.substring(instruction.indexOf("(") + 1, instruction.indexOf(")")).split(",");
                 rhs = instruction.substring(instruction.indexOf(".") + 1, instruction.indexOf("("));
                 String function = instruction.substring(0, instruction.indexOf("."));
-                instruction = opcode + " " + function + " " + rhs + " " + ARR_TO_STR(lhs);
+                instruction = opcode + tknzr + function + tknzr + rhs + tknzr + ARR_TO_STR(lhs);
             }
 
             bos.write(instruction.getBytes());

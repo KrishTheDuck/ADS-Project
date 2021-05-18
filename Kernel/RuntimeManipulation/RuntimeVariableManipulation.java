@@ -36,6 +36,11 @@ public final class RuntimeVariableManipulation implements RuntimeManipulation {
     /**
      * Commits a variable, along with its numerous properties, to the RVM map while maintaining insertion order and asserting that the variable has not already been added.
      *
+     * <p><b>Properties must be committed with order:
+     *
+     * <ol>properties, datatype, value</ol>
+     * <p><b>For the RVM to properly organize data without fucking up.
+     *
      * @param name       Name of the variable dotted with the function it comes from: {@code [method_name].[varname]}. (controls scope)
      * @param properties Array of properties pertaining to the committing variable such as datatype, value, scope, etc.
      */

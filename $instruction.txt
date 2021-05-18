@@ -1,19 +1,31 @@
-mal int a  10
-mal int b  0
-set b  !b
-set a  122
-mal int c  a*20+10*200
-mal int d  (++a)*100+20
-mal bool e  !true
-chk a > 10
-	set b  10
-	set a  10
-	set d  10
-	chk b+a > 10
-		set c  c/10
+mal  int  main.a  100
+mal  int  main.b  200
+mal  int  main.c  300
+mal  int  main.d  400
+chk  a > 10
+	set  main.b  10
+	set  main.a  10
+	set  main.d  10
+	chk  b+a > 10
+		set  main.c  c/10
 		end chk
 	rslv
-		set d  d+c
+		set  main.d  d+c
 		end rslv
+	set  main.c  100
 	end chk
-call stdio pvars " " a b c d e 
+echk  a < 5
+	chk  a+b > 200
+		chk  c > 300
+			set  main.d  10
+			end chk
+		set  main.c  100
+		end chk
+	echk  b < 100
+		set  main.d  200
+		end echk
+	end echk
+rslv
+	set  main.a  b+a
+	end rslv
+mal  int  main.e  a + b + c + d
