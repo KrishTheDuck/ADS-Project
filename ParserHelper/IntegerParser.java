@@ -39,7 +39,7 @@ public class IntegerParser extends Parser {
             case "+" -> Integer.toString(Integer.parseInt(a) + Integer.parseInt(b));
             case "<<" -> Integer.toString(Integer.parseInt(a) << Integer.parseInt(b));
             case ">>" -> Integer.toString(Integer.parseInt(a) >> Integer.parseInt(b));
-            default -> throw new UnsupportedOperationException("Operator \"" + binary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + binary_operator + "\" is unsupported.");
         };
     }
 
@@ -48,7 +48,7 @@ public class IntegerParser extends Parser {
         return switch (unary_operator) {
             case "~" -> Integer.toString(~Integer.parseInt(a));
             case "!" -> (Integer.parseInt(a) != 0) ? "0" : "1";
-            default -> throw new UnsupportedOperationException("Operator \"" + unary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + unary_operator + "\" is unsupported.");
         };
     }
 

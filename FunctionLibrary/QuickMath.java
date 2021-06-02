@@ -30,7 +30,6 @@ public final class QuickMath {
     //(~(i) % 2 + i % 2)
 
     public static void main(String[] args) {
-
     }
 
 
@@ -155,6 +154,9 @@ public final class QuickMath {
      */
     public static double POW(float base, int exponent) {
         double ans = base;
+        if (exponent == 0) return 1;
+
+        --exponent;
         while (exponent > 0) {
             ans += (base - 1) * (exponent & 1) * ans; // genius math hack
             exponent >>= 1; //bit shift exponent down
@@ -162,6 +164,23 @@ public final class QuickMath {
         }
         return ans;
     }
+
+    public static int POW(int base, int exponent) {
+        int ans = base;
+        if (exponent == 0) return 1;
+
+        --exponent;
+        while (exponent > 0) {
+            ans += (base - 1) * (exponent & 1) * ans;
+            exponent >>= 1;
+            base *= base;
+        }
+
+        return ans;
+    }
+    //2 ^(111)
+    //2^1 + 2^2 + 2^3
+    //111
 
     //GCF algorithm utilizing a quick Euclidean algorithm
     public static int GCF(int... ints) {

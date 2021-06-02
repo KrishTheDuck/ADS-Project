@@ -28,7 +28,7 @@ public class ShortParser extends Parser {
             case "+" -> Short.toString((short) (Short.parseShort(a) + Short.parseShort(b)));
             case "<<" -> Short.toString((short) (Short.parseShort(a) << Short.parseShort(b)));
             case ">>" -> Short.toString((short) (Short.parseShort(a) >> Short.parseShort(b)));
-            default -> throw new UnsupportedOperationException("Operator \"" + binary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + binary_operator + "\" is unsupported.");
         };
     }
 
@@ -37,7 +37,7 @@ public class ShortParser extends Parser {
         return switch (unary_operator) {
             case "~" -> Short.toString((short) ~Short.parseShort(a));
             case "!" -> (Short.parseShort(a) != 0) ? "0" : "1";
-            default -> throw new UnsupportedOperationException("Operator \"" + unary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + unary_operator + "\" is unsupported.");
         };
     }
 

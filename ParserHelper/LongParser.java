@@ -28,7 +28,7 @@ public class LongParser extends Parser {
             case "+" -> Long.toString(Long.parseLong(a) + Long.parseLong(b));
             case "<<" -> Long.toString(Long.parseLong(a) << Long.parseLong(b));
             case ">>" -> Long.toString(Long.parseLong(a) >> Long.parseLong(b));
-            default -> throw new UnsupportedOperationException("Operator \"" + binary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + binary_operator + "\" is unsupported.");
         };
     }
 
@@ -37,7 +37,7 @@ public class LongParser extends Parser {
         return switch (unary_operator) {
             case "~" -> Long.toString(~Long.parseLong(a));
             case "!" -> (Long.parseLong(a) != 0) ? "0" : "1";
-            default -> throw new UnsupportedOperationException("Operator \"" + unary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + unary_operator + "\" is unsupported.");
         };
     }
 

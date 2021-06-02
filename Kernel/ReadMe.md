@@ -107,4 +107,58 @@ and where. This is still a massive problem to be fixed.
 </li>
 </ul>
 </li></ul>
+
+<h4><u>5/19/2021:</u></h4>
+<p>A lot of improvements and changes in thought process.
+
+
+<u style="color:#87ceeb">Improvements:</u>
+<ul><li>Kernel:
+<ul><li>Preprocessor:
+<ul><li>The "Preprocessor" class was formerly called the "Compiler" class but since the class does more of the work of a preprocessor 
+than it does a compiler I changed the name. 
+The first "improvement" comes more with a change in thought process. 
+What I should have realized earlier is that each time we use a "<code>{...}</code>" in code it defines a scope.
+Now this changes the way I view the source file. 
+The source file is preprocessed and converted into an input that the Executor - which is an interpreter - can understand.
+If we think about conditions and iterations as just another addition of lower scope, we can better conceptualize how each 
+node should look.
+By that I mean, each time we add a child to the tree we add another scope. 
+Conditions by that definition would just be scopes that execute conditionally.
+And with that, we start defining execution processes. 
+The Preprocessor has been updated to deal with user-defined scopes and this more scope-based view of the code.
+</li></ul>
+</li></ul>
+<ul><li>Universal Parser:
+<ul><li>Finally, the beta version of UniversalParser  works for all operators. 
+Double values and other important data primitives have not been added so far. 
+So far, only integers and boolean values can be entered in. 
+Boolean values are treated as integers with only two possible values, 0 or 1.
+This makes condition evaluation particularly easy; it mimics the C language.
+</li></ul>
+</li></ul>
+
+<ul><li>Helper data structures:
+<ul><li>The Abstract Syntax Tree received minimal changes: only for optimization and logic purposes.
+Along with the Universal Parser class, new data structures such as Pairs and PairList and its subclasses have been added.
+<ul><li>PairList is a data structure that mimics a Bidirectional HashMap that's lighter.
+Because Java doesn't have a native implementation of a BidiMap, which was needed to reference the operator to reference two 
+pieces of data at once, I created PairList and some implementations. SortedPairList maintains sorted order based on the key.
+OrderedPairList maintains insertion order.
+</li></ul>
+</li></ul>
+</li></ul>
+
+<u style="color:#87ceeb">Problems and Solutions:</u>
+<ul><li>Executor: 
+<ul><li>The AST that the Executor class uses pushes nodes to the tree when the program is told that it is entering a new scope.
+This scope change is determined by the preprocessor and inserted as the instruction "<code>entr</code>".
+However, because the AST is more of a directed graph, iterative solutions have been very hard to implement.
+Java does not use TCE for recursion - which would be the option that is easiest to implement -
+so any recursive solution may be too heavy.
+So far, I have no idea how I would iterate over the tree.
+</li></ul>
+</li></ul>
+</li>
+</ul>
 </div>

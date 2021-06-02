@@ -1,6 +1,6 @@
 package Console;
 
-import Kernel.Compiler;
+import Kernel.Preprocessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +21,7 @@ import java.io.OutputStream;
  *
  * @author Krish Sridhar, Kevin Wang
  * @see Console.Terminal_Commands
- * @see Compiler
+ * @see Preprocessor
  * @since 1.0
  * Date: 3/2/2021
  */
@@ -133,7 +133,7 @@ public final class Terminal extends JFrame {
     }
 
     //works in tandem with parse to print out to the console when the file exists
-    //will eventually hand over operations to the Compiler class which will check for syntax
+    //will eventually hand over operations to the Preprocessor class which will check for syntax
 
     //start up this shit my boy
     public static void main(String... args) {
@@ -179,7 +179,7 @@ public final class Terminal extends JFrame {
         if (file.exists()) {//if the file doesn't even exist don't bother
             try {
                 if (shouldReCompile) {
-                    Compiler c = new Compiler(file);
+                    Preprocessor c = new Preprocessor(file);
                     File instruction_file = c.compile();
 //                    Executor.execute(instruction_file);
                 } else {

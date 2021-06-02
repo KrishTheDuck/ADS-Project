@@ -1,31 +1,38 @@
-mal  int  main.a  100
-mal  int  main.b  200
-mal  int  main.c  300
-mal  int  main.d  400
-chk  a > 10
-	set  main.b  10
-	set  main.a  10
-	set  main.d  10
-	chk  b+a > 10
-		set  main.c  c/10
-		end chk
-	rslv
-		set  main.d  d+c
-		end rslv
-	set  main.c  100
-	end chk
-echk  a < 5
-	chk  a+b > 200
-		chk  c > 300
-			set  main.d  10
-			end chk
-		set  main.c  100
-		end chk
-	echk  b < 100
-		set  main.d  200
-		end echk
-	end echk
-rslv
-	set  main.a  b+a
-	end rslv
-mal  int  main.e  a + b + c + d
+mal  int  a  100
+mal  int  b  200
+mal  int  c  300
+mal  int  d  400
+entr  scope1
+	mal  int  f  100
+	entr  scope2
+		mal  int  e  100
+		end  scope2
+	end  scope1
+entr  if  100 >= -a - -10 > 10
+	set  b  10
+	set  a  10
+	set  d  10
+	entr  if  b + a > 10
+		set  c  c / 10
+		end  if
+	else
+		set  d  d + c
+		end  else
+	set  c  100
+	end  if
+entr  elif  a < 5
+	entr  if  a + b > 200
+		entr  if  c > 300
+			set  d  10
+			end  if
+		set  c  100
+		end  if
+	entr  elif  b < 100
+		set  d  200
+		end  elif
+	end  elif
+else
+	set  a  b + a
+	end  else
+mal  int  e  a + b + c + d
+EXIT

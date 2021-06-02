@@ -10,7 +10,7 @@ public class StringParser extends Parser {
     public String b_execute(String a, String b, String binary_operator) {
         return switch (binary_operator) {
             case "+" -> a + b;
-            default -> throw new UnsupportedOperationException("Operator \"" + binary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + binary_operator + "\" is unsupported.");
         };
     }
 

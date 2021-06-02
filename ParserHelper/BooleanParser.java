@@ -19,7 +19,7 @@ public class BooleanParser extends Parser {
     public String u_execute(String a, String unary_operator) {
         return switch (unary_operator) {
             case "!" -> (supported(a)) ? "1" : "0";
-            default -> throw new UnsupportedOperationException("Operator \"" + unary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + unary_operator + "\" is unsupported.");
         };
     }
 

@@ -1,50 +1,54 @@
-package Kernel;
+package Kernel.Data_Structures;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class AbstractSyntaxTree {
-    private InstructionNode head;
-
+    private Node head;
 
     public AbstractSyntaxTree(String head) {
-        this.head = new InstructionNode(head, null);
+        this.head = new Node(head, null);
     }
 
     public AbstractSyntaxTree() {
         this.head = null;
     }
 
-    public static void main(String[] args) {
-
+    public Node current() {
+        return this.head;
     }
 
-    public InstructionNode head() {
-        InstructionNode head = this.head;
+    public Node head() {
+        Node head = this.head;
         while (head.parent() != null) {
             head = move_back();
         }
         return head;
     }
 
+    public Node enter(int child) {
+        return head.children().get(child);
+    }
+
     public void load(String conditional) {
-        this.head.append(conditional);
+        this.head.push(conditional);
     }
 
     public void add_no_enter(String conditional) {
         if (this.head == null) {
-            this.head = new InstructionNode(conditional, null);
+            this.head = new Node(conditional, null);
             return;
         }
-        InstructionNode new_head = new InstructionNode(conditional, head);
+        Node new_head = new Node(conditional, head);
         this.head.add(new_head);
     }
 
     public void add_and_enter(String conditional) {
         if (this.head == null) {
-            this.head = new InstructionNode(conditional, null);
+            this.head = new Node(conditional, null);
             return;
         }
-        InstructionNode new_head = new InstructionNode(conditional, this.head);
+        Node new_head = new Node(conditional, this.head);
         this.head.add(new_head);
         this.head = new_head;
     }
@@ -52,23 +56,23 @@ public class AbstractSyntaxTree {
     public void enter_and_add(String conditional, int i) {
         if (i >= this.head.children().size()) return;
         if (this.head == null) {
-            this.head = new InstructionNode(conditional, null);
+            this.head = new Node(conditional, null);
             return;
         }
         this.head = this.head.children().get(i);
-        this.head.add(new InstructionNode(conditional, this.head));
+        this.head.add(new Node(conditional, this.head));
     }
 
-    public InstructionNode move_back() {
-        InstructionNode save = this.head;
+    public Node move_back() {
+        Node save = this.head;
         if ((this.head = this.head.parent()) == null) {
             this.head = save;
         }
         return this.head;
     }
 
-    public InstructionNode move_back_and_delete() {
-        InstructionNode save = this.head;
+    public Node move_back_and_delete() {
+        Node save = this.head;
         if ((this.head = this.head.parent()) == null) {
             this.head = save;
         } else {
@@ -77,8 +81,8 @@ public class AbstractSyntaxTree {
         return this.head;
     }
 
-    public InstructionNode move_back_and_delete_branch() {
-        InstructionNode save = this.head;
+    public Node move_back_and_delete_branch() {
+        Node save = this.head;
         if ((this.head = this.head.parent()) == null) {
             this.head = save;
         } else {
@@ -93,9 +97,9 @@ public class AbstractSyntaxTree {
         print(head().children());
     }
 
-    private void print(List<InstructionNode> nodes) {
-        for (InstructionNode node : nodes) {
-            System.out.println(node + ": " + node.code(true));
+    private void print(List<Node> nodes) {
+        for (Node node : nodes) {
+            System.out.println(node + ": " + node.code());
             System.out.println(node.children());
             print(node.children());
         }

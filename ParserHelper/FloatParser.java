@@ -26,7 +26,7 @@ public class FloatParser extends Parser {
             case "^" -> Float.toString(pow(a, b));
             case "*" -> Float.toString(Float.parseFloat(a) * Float.parseFloat(b));
             case "+" -> Float.toString(Float.parseFloat(a) + Float.parseFloat(b));
-            default -> throw new UnsupportedOperationException("Operator \"" + binary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + binary_operator + "\" is unsupported.");
         };
     }
 

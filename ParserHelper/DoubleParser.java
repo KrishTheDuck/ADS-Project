@@ -26,7 +26,7 @@ public class DoubleParser extends Parser {
             case "^" -> Double.toString(pow(a, b));
             case "*" -> Double.toString(Double.parseDouble(a) * Double.parseDouble(b));
             case "+" -> Double.toString(Double.parseDouble(a) + Double.parseDouble(b));
-            default -> throw new UnsupportedOperationException("Operator \"" + binary_operator + "\" is unsupported.");
+            default -> throw new UnsupportedOperationException("Operators \"" + binary_operator + "\" is unsupported.");
         };
     }
 
