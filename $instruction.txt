@@ -8,10 +8,13 @@ entr  scope1
 		mal  int  e  100
 		end  scope2
 	end  scope1
-entr  if  100 >= -a - -10 > 10
+entr  if  100 >= 20 > 10
+	entr  if  30 > 2
+		set  d  20 * 10
+		end  if
 	set  b  10
 	set  a  10
 	set  d  10
 	end  if
-mal  int  e  a + b + c + d
+mal  int  e  100 + 200 + 300 + 400
 EXIT

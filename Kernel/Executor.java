@@ -10,9 +10,9 @@ import ParserHelper.UniversalParser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * Executes instruction file.
@@ -54,11 +54,11 @@ public final class Executor {
                     case "if", "elif" -> {
                         System.out.println("\tConditional: " + tokens[2]);
                         ast.add_and_enter(tokens[1], true); //add scope name
-                        ast.load(tokens[2]); //set first condition to this
+                        ast.set_condition(tokens[2]); //set first condition to this
                     }
                     case "else" -> {
                         ast.add_and_enter(tokens[1], true); //add scope name
-                        ast.load("rslv"); //set first condition to 'rslv' which should tell the execution path line to resolve to this condition if all else fails
+                        ast.load("else");
                     }
                     default -> ast.add_and_enter(tokens[1], false); //not a condition just a custom scope
                 }
@@ -66,6 +66,7 @@ public final class Executor {
             } else if (line.startsWith("end")) { //ending a scope
                 String token = line.substring(3 + Preprocessor.tknzr.length() - 1);
                 System.out.println("\tEnding scope: " + ast.current());
+                ast.load("end");
                 ast.move_back();
                 ast.load("chk " + token); //says to search for the next token and check for execution
             } else {
@@ -78,67 +79,53 @@ public final class Executor {
         //time for recursive search
         //first i return to the first node
         ast.head();
-        //i need to iterate over the main node and recursively check children when i need to.
-        System.out.println("main branch: " + ast.head().code());
-        List<String> procedure = new ArrayList<>(15); //noteme if this starts working delete procedure and start doing execution on command
-        while (ast.code().size() > 0) {
-            String statement = ast.gci(); //get next instruction
-            String[] tokens = statement.split(Preprocessor.tknzr); //get all the tokens
-            System.out.println("Checking: " + Arrays.toString(tokens));
-            switch (tokens[0]) { //opcodes baby
-                //memory allocate for var
-                case "mal", "set" -> {
-                    //dont do any instructins nows
-                    procedure.add(statement);
-                    //consume the instruction and look at next
-                    ast.consume_next();
+        //!!!GOTTA PUSH THE EXIT CALL!!!
+        ast.load("EXIT");
+        System.out.println("Main code: " + ast.code());
+        //checking each child:
+        Node current = ast.current();
+        Queue<String> mainLoop = new LinkedList<>();
+
+        while (!(line = current.pop()).equals("EXIT")) { //keep iterating
+            String[] tokens = line.split(Preprocessor.tknzr);
+            System.out.println("\tTOKENS: " + Arrays.toString(tokens));
+            if (tokens[0].equals("chk")) {
+                if ("if".equals(tokens[1]) || "elif".equals(tokens[1])) { //conditional
+                    Node checking = current.find(tokens[1]);
+                    boolean enter = !UniversalParser.evaluate(checking.condition()).equals("0");
+                    System.out.println(enter + " should enter: " + checking);
+                    if (enter) { //if true enter and !!!DELETE ALL CONSECUTIVE ELIF ELSE CHILDREN!!!
+                        for (Node n : current.children()) { //delete consecutive elif and else chains
+                            if (n.name().equals("elif")) {
+                                current.delete(n);
+                                continue;
+                            } else if (n.name().equals("else")) {
+                                current.delete(n);
+                                break;
+                            }
+                            break;
+                        }
+                        current = checking;
+                    } else { //if false remove.
+                        current.delete(checking);
+                    }
                 }
-                //check child !!!RECURSION TIME!!!
-                case "chk" -> {
-                    RDS(ast, procedure);
+                //noteme because we delete all chains on "true" if we find an "else" block we have to execute it
+                else { //enter always
+                    current = current.find(tokens[1]); //child node;
                 }
+            } else if ("end".equals(tokens[0])) { //exit script
+                //delete node
+                Node save = current;
+                current = current.parent();
+                current.delete(save);
+            } else {
+                mainLoop.add(line);
             }
         }
-        System.out.println("procedure: " + procedure);
+        System.out.println(mainLoop);
     }
 
-
-    //rds or recursive directed search is a recursive algorithm designed to follow the execution path line of the ast and return a result
-    private static void RDS(AbstractSyntaxTree ast, List<String> q) throws Exception {
-        //first i have to get the current instruction
-        String[] tokens = ast.consume_next().split(Preprocessor.tknzr); //if its truly a chk command it should be "chk  <node name>"
-        if (!ast.enter(tokens[1])) { //enter this child
-            throw new Exception("Nonexistent child: " + tokens[1]);
-        }
-        System.out.println("Statement: " + Arrays.toString(tokens));
-        Node n = ast.current();
-        if (n.isCondition()) { //if its a condition evaluate
-            //if a forget about it
-            boolean condition = !UniversalParser.evaluate(ast.consume_next()).equals("0");
-            if (condition) //if condition is true load instructions
-            {
-                while (ast.code().size() > 0) {
-                    String s = ast.consume_next();
-                    if (s.startsWith("entr")) //recur
-                        RDS(ast, q);
-                    q.add(s);
-                }
-                //if the condition is true i don't want to evaluate any consecutive elif or else
-                ast.move_back_and_delete_branch();
-                for (Node child : ast.current().children()) { //for every child
-                    if (child.name().equals("elif")) { //if its elif delete
-                        ast.delete(child);
-                        continue; //go to next
-                    } else if (child.name().equals("else")) { //if i get na else that's the end of the chain don't eval more
-                        ast.delete(child); //delete
-                        break; //no more deletion
-                    }
-                    break; //not an elif or else chain already done don't iterate anymore.
-                }
-            }  //condition is false delete branch and return
-            ast.move_back_and_delete_branch();
-        }
-    }
 
     public static void ExecutionEngine(String... lines) throws AlreadyCommittedException, NonExistentVariableException {
         for (String line : lines) {

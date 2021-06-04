@@ -131,4 +131,8 @@ public class AbstractSyntaxTree {
     public void delete(Node child) {
         this.head.children().remove(child);
     }
+
+    public void set_condition(String token) {
+        this.head.set_condition(token);
+    }
 }

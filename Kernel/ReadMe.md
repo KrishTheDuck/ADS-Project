@@ -108,7 +108,7 @@ and where. This is still a massive problem to be fixed.
 </ul>
 </li></ul>
 
-<h4><u>5/19/2021:</u></h4>
+<h4><u>6/3/2021:</u></h4>
 <p>A lot of improvements and changes in thought process.
 
 
@@ -161,4 +161,9 @@ So far, I have no idea how I would iterate over the tree.
 </li></ul>
 </li>
 </ul>
+
+
+<h4><u>6/4/2021:</u></h4>
+<p>Iterative searching algorithm for the abstract syntax tree now works!
+But I still need to work on memory management and stuff.</p>
 </div>

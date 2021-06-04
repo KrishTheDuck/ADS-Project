@@ -20,8 +20,9 @@ public class Node {
     private final String name;
     private final Node parent;
     private final Queue<String> code = new LinkedList<>();
-    private List<Node> children;
     private final boolean isCondition;
+    private List<Node> children;
+    private String condition;
 
     //private node initialization. SHOULD NOT BE USED BY USER!!!
     private Node(String name) {
@@ -53,15 +54,17 @@ public class Node {
         this.children = children;
         this.parent = parent;
         this.isCondition = isCondition;
+        if (!this.isCondition)
+            condition = null;
+        else
+            condition = "";
     }
 
     /**
      * @return Null if not a condition or the first code line if it is a condition.
      */
     public String condition() {
-        if (this.isCondition)
-            return code.peek();
-        return null;
+        return this.condition;
     }
 
     /**
@@ -80,6 +83,19 @@ public class Node {
      */
     public void set_children(List<Node> children) {
         this.children = children;
+    }
+
+
+    /**
+     * Stores a condition if we need one.
+     *
+     * @param condition String condition
+     */
+    public void set_condition(String condition) {
+        if (this.isCondition)
+            this.condition = condition;
+        else
+            throw new IllegalArgumentException("Node \"" + name + "\" is not conditional.\nCode body:\n" + code);
     }
 
     /**
@@ -195,5 +211,29 @@ public class Node {
      */
     public boolean isCondition() {
         return this.isCondition;
+    }
+
+
+    /**
+     * Finds the first occurrence of a node in the children given the name.
+     *
+     * @param node_name Name of the node
+     * @return Node if found and null if nothing is found
+     */
+    public Node find(String node_name) {
+        for (Node n : this.children) {
+            if (n.name.equals(node_name))
+                return n;
+        }
+        return null;
+    }
+
+    /**
+     * Remove the node that we should delete.
+     *
+     * @param node Node to delete
+     */
+    public void delete(Node node) {
+        this.children.remove(node);
     }
 }

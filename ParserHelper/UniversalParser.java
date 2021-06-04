@@ -88,10 +88,10 @@ public final class UniversalParser {
                 case ">>>" -> num1 >>> num2;
                 case "&&" -> ((num1 == 1) && (num2 == 1)) ? 1 : 0;
                 case "||" -> (num1 == 1) || (num2 == 1) ? 1 : 0;
-                case ">=" -> num1 >= num2 ? 1 : 0;
-                case "<=" -> num1 <= num2 ? 1 : 0;
-                case ">" -> num1 > num2 ? 1 : 0;
-                case "<" -> num1 < num2 ? 1 : 0;
+                case ">=" -> num1 >= num2 ? num1 : num2;
+                case "<=" -> num1 <= num2 ? num2 : num1;
+                case ">" -> num1 > num2 ? num1 : num2;
+                case "<" -> num1 < num2 ? num2 : num1;
                 case "==" -> num1.equals(num2) ? 1 : 0;
                 case "!=" -> !num1.equals(num2) ? 1 : 0;
                 default -> throw new IllegalStateException("Unexpected value: " + op);
