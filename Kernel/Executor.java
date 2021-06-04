@@ -10,8 +10,9 @@ import ParserHelper.UniversalParser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Executes instruction file.
@@ -21,9 +22,6 @@ import java.util.Queue;
  * @since 1.0
  * Date: March 2021
  */
-//TODO one day. not today. not this year. but one day. we need to implement a branch prediction algorithm. This will be the hardest fucking thing you've ever done.
-//  Pattern p = Pattern.compile("[a-zA-Z0-9.]+");
-//  Matcher m = p.matcher(expression);
 
 public final class Executor {
     private static RuntimeVariableManipulation rvm;
@@ -38,32 +36,108 @@ public final class Executor {
 
     public static void InstructionLoader(File f) throws Exception {
         BufferedReader br = new BufferedReader(new FileReader(f));
-        AbstractSyntaxTree ast = new AbstractSyntaxTree("start");
+        AbstractSyntaxTree ast = new AbstractSyntaxTree("start", false);
 
-        //start loading
+        //create an execution path first before computing
+
+        //start from beginning of file
         String line;
-        String scope = "start";
-        while ((line = br.readLine()) != null) {
-            line = line.strip();
-            if (line.startsWith("chk") || line.startsWith("echk") || line.startsWith("rslv")) {
-                ast.add_and_enter(line);
-                scope = (line.startsWith("rslv")) ? "rslv" : line.substring(0, line.indexOf(Preprocessor.tknzr));
-            } else if (line.startsWith("end")) {
-                ast.move_back();
-                switch (scope) {
-                    case "else", "elif" -> ast.load("cnc"); //check next child
-                    case "if" -> ast.load("cc"); //check first child
-                    case "start" -> {
+        while (!(line = br.readLine()).equals("EXIT")) {
+            line = line.strip(); //clear tabs
+            System.out.println("Considering: " + line);
+            //if encounter "entr" create a node
+            if (line.startsWith("entr")) {
+                String[] tokens = line.split(Preprocessor.tknzr);
+                System.out.println("\tEntering: " + tokens[1]);
+                //load the instruction as the first line of code.
+                switch (tokens[1]) {
+                    case "if", "elif" -> {
+                        System.out.println("\tConditional: " + tokens[2]);
+                        ast.add_and_enter(tokens[1], true); //add scope name
+                        ast.load(tokens[2]); //set first condition to this
                     }
-                    default -> throw new IllegalStateException("Unexpected scope: " + scope);
+                    case "else" -> {
+                        ast.add_and_enter(tokens[1], true); //add scope name
+                        ast.load("rslv"); //set first condition to 'rslv' which should tell the execution path line to resolve to this condition if all else fails
+                    }
+                    default -> ast.add_and_enter(tokens[1], false); //not a condition just a custom scope
                 }
-                ast.load("cc");
+                //if encounter "end" return to parent
+            } else if (line.startsWith("end")) { //ending a scope
+                String token = line.substring(3 + Preprocessor.tknzr.length() - 1);
+                System.out.println("\tEnding scope: " + ast.current());
+                ast.move_back();
+                ast.load("chk " + token); //says to search for the next token and check for execution
             } else {
+                System.out.println("\tLoading instruction: " + line);
                 ast.load(line);
             }
         }
-        //begin execution
-        execute(ast);
+
+        System.out.println("Starting execution...");
+        //time for recursive search
+        //first i return to the first node
+        ast.head();
+        //i need to iterate over the main node and recursively check children when i need to.
+        System.out.println("main branch: " + ast.head().code());
+        List<String> procedure = new ArrayList<>(15); //noteme if this starts working delete procedure and start doing execution on command
+        while (ast.code().size() > 0) {
+            String statement = ast.gci(); //get next instruction
+            String[] tokens = statement.split(Preprocessor.tknzr); //get all the tokens
+            System.out.println("Checking: " + Arrays.toString(tokens));
+            switch (tokens[0]) { //opcodes baby
+                //memory allocate for var
+                case "mal", "set" -> {
+                    //dont do any instructins nows
+                    procedure.add(statement);
+                    //consume the instruction and look at next
+                    ast.consume_next();
+                }
+                //check child !!!RECURSION TIME!!!
+                case "chk" -> {
+                    RDS(ast, procedure);
+                }
+            }
+        }
+        System.out.println("procedure: " + procedure);
+    }
+
+
+    //rds or recursive directed search is a recursive algorithm designed to follow the execution path line of the ast and return a result
+    private static void RDS(AbstractSyntaxTree ast, List<String> q) throws Exception {
+        //first i have to get the current instruction
+        String[] tokens = ast.consume_next().split(Preprocessor.tknzr); //if its truly a chk command it should be "chk  <node name>"
+        if (!ast.enter(tokens[1])) { //enter this child
+            throw new Exception("Nonexistent child: " + tokens[1]);
+        }
+        System.out.println("Statement: " + Arrays.toString(tokens));
+        Node n = ast.current();
+        if (n.isCondition()) { //if its a condition evaluate
+            //if a forget about it
+            boolean condition = !UniversalParser.evaluate(ast.consume_next()).equals("0");
+            if (condition) //if condition is true load instructions
+            {
+                while (ast.code().size() > 0) {
+                    String s = ast.consume_next();
+                    if (s.startsWith("entr")) //recur
+                        RDS(ast, q);
+                    q.add(s);
+                }
+                //if the condition is true i don't want to evaluate any consecutive elif or else
+                ast.move_back_and_delete_branch();
+                for (Node child : ast.current().children()) { //for every child
+                    if (child.name().equals("elif")) { //if its elif delete
+                        ast.delete(child);
+                        continue; //go to next
+                    } else if (child.name().equals("else")) { //if i get na else that's the end of the chain don't eval more
+                        ast.delete(child); //delete
+                        break; //no more deletion
+                    }
+                    break; //not an elif or else chain already done don't iterate anymore.
+                }
+            }  //condition is false delete branch and return
+            ast.move_back_and_delete_branch();
+        }
     }
 
     public static void ExecutionEngine(String... lines) throws AlreadyCommittedException, NonExistentVariableException {
@@ -77,46 +151,4 @@ public final class Executor {
             }
         }
     }
-
-    private static void execute(AbstractSyntaxTree ast) {
-        Node curr = ast.head();
-        Queue<String> qin = new LinkedList<>();
-
-        String code;
-        int child = 0;
-        System.out.println("Current Node: " + curr);
-        while (!(code = curr.pop()).equals("EXIT")) {
-            System.out.print("\t");
-            if (code.equals("cc")) {
-                curr = ast.enter(child++);
-                System.out.println("Checking child: " + curr + " and evaluating condition: " + curr.instruction()); //todo else if statements need peeking; use iteration to check over the children and evaluate
-                String[] condition = curr.instruction().split(Preprocessor.tknzr);
-                String cond_opcode = condition[0];
-                String bool = condition[1];
-                String[] statement = bool.split(" ");
-                for (String token : statement) { //todo replace vars
-
-                }
-                if (UniversalParser.evaluate(curr.instruction().substring(curr.instruction().indexOf(Preprocessor.tknzr))).equals("0")) { //if the if-statement is false remove it
-                    System.out.println("Condition evaluated to 0, deleting...");
-                    curr = ast.move_back_and_delete_branch();
-                    System.out.println("Current Node: " + curr);
-                }
-            } else if (code.startsWith("end")) {
-                System.out.println("Branch ended. " + curr);
-                curr = ast.move_back_and_delete_branch(); //todo when you add iteration make sure "delete branch" is changed until its ascertained that it won't run
-                System.out.println("Current Node: " + curr);
-            } else {
-                qin.add(code);
-                System.out.println("Added to queue: " + code);
-            }
-        }
-
-        System.out.println(qin);
-    }
-
-    private static String eval_cond(String bool) {
-        return UniversalParser.evaluate(bool);
-    }
-
 }

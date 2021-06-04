@@ -13,7 +13,6 @@ $ int main(){
         int f = 100;
         scope2:{ # scope 2
             int e = 100;
-
         } # end of scope 2, e should be deleted
     }  # end of scope 1, f should be deleted
 
@@ -22,23 +21,6 @@ $ int main(){
         b = 10;
         a = 10;
         d = 10;
-        if(b + a > 10){
-            c = c / 10;
-        }else {
-            d = d + c;
-        }
-        c = 100;
-    }else if(a < 5){
-        if(a + b > 200){
-            if(c > 300){
-                d = 10;
-            }
-            c = 100;
-        }else if (b < 100){
-            d = 200;
-        }
-    }else {
-        a = b + a;
     }
 
     # checking result tally

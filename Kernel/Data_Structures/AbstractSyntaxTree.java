@@ -1,13 +1,14 @@
 package Kernel.Data_Structures;
 
 import java.util.List;
+import java.util.Queue;
 
 @SuppressWarnings("unused")
 public class AbstractSyntaxTree {
     private Node head;
 
-    public AbstractSyntaxTree(String head) {
-        this.head = new Node(head, null);
+    public AbstractSyntaxTree(String head, boolean isCondition) {
+        this.head = new Node(head, null, isCondition);
     }
 
     public AbstractSyntaxTree() {
@@ -18,6 +19,18 @@ public class AbstractSyntaxTree {
         return this.head;
     }
 
+    public String consume_next() {
+        return this.head.pop();
+    }
+
+    public Queue<String> code() {
+        return this.head.code();
+    }
+
+    public String gci() { //get current instruction
+        return this.head.peek();
+    }
+
     public Node head() {
         Node head = this.head;
         while (head.parent() != null) {
@@ -26,41 +39,51 @@ public class AbstractSyntaxTree {
         return head;
     }
 
-    public Node enter(int child) {
-        return head.children().get(child);
+    public void enter(int child) {
+        this.head = head.children().get(child);
     }
 
-    public void load(String conditional) {
-        this.head.push(conditional);
+    public boolean enter(String child) {
+        for (Node n : this.head.children()) {
+            if (n.name().equals(child)) {
+                this.head = n;
+                return true;
+            }
+        }
+        return false;
     }
 
-    public void add_no_enter(String conditional) {
+    public void load(String name) {
+        this.head.push(name);
+    }
+
+    public void add_no_enter(String name, boolean isCondition) {
         if (this.head == null) {
-            this.head = new Node(conditional, null);
+            this.head = new Node(name, null, isCondition);
             return;
         }
-        Node new_head = new Node(conditional, head);
+        Node new_head = new Node(name, head, isCondition);
         this.head.add(new_head);
     }
 
-    public void add_and_enter(String conditional) {
+    public void add_and_enter(String name, boolean isCondition) {
         if (this.head == null) {
-            this.head = new Node(conditional, null);
+            this.head = new Node(name, null, isCondition);
             return;
         }
-        Node new_head = new Node(conditional, this.head);
+        Node new_head = new Node(name, this.head, isCondition);
         this.head.add(new_head);
         this.head = new_head;
     }
 
-    public void enter_and_add(String conditional, int i) {
+    public void enter_and_add(String name, int i, boolean isCondition) {
         if (i >= this.head.children().size()) return;
         if (this.head == null) {
-            this.head = new Node(conditional, null);
+            this.head = new Node(name, null, isCondition);
             return;
         }
         this.head = this.head.children().get(i);
-        this.head.add(new Node(conditional, this.head));
+        this.head.add(new Node(name, this.head, isCondition));
     }
 
     public Node move_back() {
@@ -93,15 +116,19 @@ public class AbstractSyntaxTree {
 
     public void print() {
         System.out.println(head() + ": ");
-        System.out.println(head().children());
+        System.out.println(head().code());
         print(head().children());
     }
 
     private void print(List<Node> nodes) {
         for (Node node : nodes) {
-            System.out.println(node + ": " + node.code());
-            System.out.println(node.children());
+            System.out.println("children of " + node + ": " + node.children());
+            System.out.println("code block of " + node + ": " + node.code());
             print(node.children());
         }
+    }
+
+    public void delete(Node child) {
+        this.head.children().remove(child);
     }
 }

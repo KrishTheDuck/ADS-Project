@@ -12,27 +12,6 @@ entr  if  100 >= -a - -10 > 10
 	set  b  10
 	set  a  10
 	set  d  10
-	entr  if  b + a > 10
-		set  c  c / 10
-		end  if
-	else
-		set  d  d + c
-		end  else
-	set  c  100
 	end  if
-entr  elif  a < 5
-	entr  if  a + b > 200
-		entr  if  c > 300
-			set  d  10
-			end  if
-		set  c  100
-		end  if
-	entr  elif  b < 100
-		set  d  200
-		end  elif
-	end  elif
-else
-	set  a  b + a
-	end  else
 mal  int  e  a + b + c + d
 EXIT

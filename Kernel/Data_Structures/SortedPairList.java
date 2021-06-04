@@ -4,18 +4,67 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * A PairList implementation that maintains sorted order through insertion.
+ *
+ * @param <K> Any comparable object
+ * @param <V> Any comparable object
+ * @author Krish Sridhar♦
+ * @implNote Worst-Case insertion is O(n)
+ * @see PairList
+ * @see Pair
+ * @see ArrayList
+ * @since 1.0
+ * Date: May 30, 2021
+ */
 public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> extends PairList<K, V> {
-    private final List<Pair<K, V>> STORED;
+    private final List<Pair<K, V>> STORED; //backing arraylist.
 
+    /**
+     * Constructor instantiating the backing ArrayList and adds the passed values as a pair.
+     *
+     * @param key   Any type-matching object signifying the key.
+     * @param value Any type-matching object signifying the value.
+     * @see SortedPairList#SortedPairList(Comparable, Comparable, int)
+     */
     public SortedPairList(K key, V value) {
-        STORED = new ArrayList<>(10);
+        this(key, value, INIT_CAPACITY);
+    }
+
+    /**
+     * Constructor instantiating the backing ArrayList and adds the passed values as a pair.
+     *
+     * @param key   Any type-matching object signifying the key.
+     * @param value Any type-matching object signifying the value.
+     */
+    public SortedPairList(K key, V value, int size) {
+        STORED = new ArrayList<>(size);
         STORED.add(new Pair<>(key, value));
     }
 
+    /**
+     * Instantiates the backing ArrayList with some initial size.
+     *
+     * @param size Some initial size of the PairList.
+     */
     public SortedPairList(int size) {
         STORED = new ArrayList<>(size);
     }
 
+    /**
+     * Instantiates the backing ArrayList with a predefined initial capacity.
+     *
+     * @see PairList#INIT_CAPACITY
+     */
+    public SortedPairList() {
+        STORED = new ArrayList<>(INIT_CAPACITY);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @implNote To maintain insertion order the pair is inserted into the list with least to greatest order.
+     */
     @Override
     public boolean add(K key, V value) {
         Pair<K, V> insert = new Pair<>(key, value);
@@ -37,6 +86,11 @@ public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> ex
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @implNote O(log n) time as specified by a binary search of all elements.
+     */
     @Override
     public boolean remove(K key, V value) {
         Pair<K, V> target = new Pair<>(key, value);
@@ -70,16 +124,26 @@ public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> ex
         return false;
     }
 
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return STORED.toString();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Iterator<Pair<K, V>> iterator() {
         return STORED.iterator();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int size() {
         return STORED.size();

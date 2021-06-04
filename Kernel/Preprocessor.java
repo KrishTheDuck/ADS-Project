@@ -215,7 +215,7 @@ public final class Preprocessor {
             } else if (instruction.toString().startsWith("else")) {
                 instruction.delete(0, instruction.length()); //delete instruction
                 ++tab; //increase tab
-                instruction.append("else"); //add instruction
+                instruction.append("entr").append(tknzr).append("else"); //add instruction
             }
             //if the instruction is indicating an end of scope
             else if (instruction.toString().startsWith("end")) {
