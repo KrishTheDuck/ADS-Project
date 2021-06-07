@@ -1,5 +1,6 @@
 package Console;
 
+import Kernel.Executor;
 import Kernel.Preprocessor;
 
 import javax.swing.*;
@@ -12,83 +13,61 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.OutputStream;
 
+public class Terminal extends JFrame {
+    private static BufferedOutputStream nbos;
+    private JTextField input;
+    private JTextArea output;
+    private JPanel content;
 
-/**
- * Outlines console properties such as color, size, execution, parsing, and I/O.
- * <p>
- * TODO native buffered input stream?
- * </p>
- *
- * @author Krish Sridhar, Kevin Wang
- * @see Console.Terminal_Commands
- * @see Preprocessor
- * @since 1.0
- * Date: 3/2/2021
- */
-public final class Terminal extends JFrame {
-    private static BufferedOutputStream nbos; //native buffered output stream
-    private final JTextField command_input = new JTextField();
-    private final JTextArea command_output = new JTextArea();
-
-    //set up how the GUI behaves and looks
     public Terminal() {
-        JPanel contentPane = new JPanel();
-        setContentPane(contentPane); //little to no idea what this does
-        setPreferredSize(new Dimension(800, 450)); //create a gui with 800x450
-        command_output.setEditable(false); //you cant edit the output pane
+        super("Terminal");
+        super.setContentPane(content);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setPreferredSize(new Dimension(800, 500));
+        pack();
+        setVisible(true);
 
-        //set the font to the classic consolas in output field and input field
-        command_output.setFont(new Font("Consolas", Font.PLAIN, 14));
-        command_input.setFont(new Font("Consolas", Font.PLAIN, 14));
-
-        //make all of it dark
-        command_input.setBackground(Color.BLACK);
-        command_output.setBackground(Color.BLACK);
+        //set background color
+        input.setBackground(Color.BLACK);
+        output.setBackground(Color.BLACK);
         getContentPane().setBackground(Color.BLACK);
 
-        //set the font color to white
-        command_input.setForeground(Color.WHITE);
-        command_output.setForeground(Color.WHITE);
+        //set foreground color
+        input.setForeground(Color.WHITE);
+        output.setForeground(Color.WHITE);
+        getContentPane().setForeground(Color.BLACK);
 
-        //"enter" means you accept input
-        command_input.addKeyListener(new KeyAdapter() {
+        //set font
+        input.setFont(new Font("Consolas", Font.PLAIN, 14));
+        output.setFont(new Font("Consolas", Font.PLAIN, 14));
+
+        //set properties
+        input.setEditable(true);
+        output.setEditable(false);
+
+        input.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    String command = command_input.getText();
+                    String command = input.getText();
 
                     print(true, command);
-                    command_input.setText("");
+                    input.setText("");
                     command = (parse(command.split(" ")));
                     print(false, command);
                 }
             }
         });
 
-        // call onCancel() when cross is clicked
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
+            @Override
+            public void windowClosed(WindowEvent e) {
                 onCancel();
             }
         });
-
-        // call onCancel() on ESCAPE
-        contentPane.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        content.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
-
-    public static String readInput(Terminal t) {
-        final String[] input = new String[1];
-        t.command_input.addKeyListener(new KeyAdapter() {
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    input[0] = t.command_input.getText();
-                }
-            }
-        });
-        return input[0];
-    }
-
-    //throw away everything and stop the GUI
 
     public static void println(boolean userPrints, String... s) {
         try {
@@ -127,26 +106,24 @@ public final class Terminal extends JFrame {
         Terminal dialog = new Terminal();
         dialog.pack();
         dialog.setVisible(true);
-        dialog.command_output.setText("Terminal Commands...\n");
-        nbos = new BufferedOutputStream(new JTextAreaOutputStream(dialog.command_output));
+        dialog.output.setText("Terminal Commands...\n");
+        nbos = new BufferedOutputStream(new JTextAreaOutputStream(dialog.output));
+        dialog.print_commands();
         return dialog;
     }
 
     //works in tandem with parse to print out to the console when the file exists
     //will eventually hand over operations to the Preprocessor class which will check for syntax
-
-    //start up this shit my boy
     public static void main(String... args) {
         evoke();
     }
-    ////See the Terminal_Commands enumeration to see all supported commands
+    //See the Terminal_Commands enumeration to see all supported commands
 
     private void onCancel() {
         try {
             nbos.close();
         } catch (Exception ignored) {
         }
-
         dispose();
     }
 
@@ -181,9 +158,9 @@ public final class Terminal extends JFrame {
                 if (shouldReCompile) {
                     Preprocessor c = new Preprocessor(file);
                     File instruction_file = c.compile();
-//                    Executor.execute(instruction_file);
+                    Executor.InstructionLoader(instruction_file);
                 } else {
-//                    Executor.execute(file);
+                    Executor.InstructionLoader(file);
                 }
             } catch (Exception e) {
                 print(false, e.toString());
@@ -194,10 +171,11 @@ public final class Terminal extends JFrame {
     }
 
     private String print_commands() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("\n-------------------------------------------------------------");
         for (Terminal_Commands cmd : Terminal_Commands.values()) {
-            sb.append(cmd).append(">>").append(cmd.description()).append("\n"); // command>>description
+            sb.append(cmd).append(">> ").append(cmd.description()).append("\n"); // command>>description
         }
+        sb.append("-------------------------------------------------------------");
         return sb.toString();
     }
 

@@ -9,7 +9,7 @@ package Kernel.Data_Structures;
  * @since 1.0
  * Date: May 30, 2021
  */
-public record Pair<K, V>(K key, V value) implements Comparable<Pair<K, V>> {
+public record Pair<K, V>(K key, V value) {
     /**
      * Checks if the key and values for both pairs are equal.
      *

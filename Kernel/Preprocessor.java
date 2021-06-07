@@ -15,7 +15,7 @@ import java.util.*;
 public final class Preprocessor {
     public final static String tknzr = "  "; //stores the token that separates meaningful operation codes
     private final static char comment_marker = '#'; //stores the token that indicates a comment
-    private final static String mdelim = "$"; //stores method delimiter
+    private final static String mdelim = "@"; //stores method delimiter
     private final static String pdelim = ","; //stores parameter delimiter
     private File src_code; //source code
     private File inf_code; //instruction file code
@@ -41,12 +41,16 @@ public final class Preprocessor {
 
     //converts an array of type T to a string that can be appended to the file
     //it uses the compilation tokenizer so that reading from the file can be simple.
-    private static <T> String ARR_TO_STR(T[] arr) {
+    private static <T> String ARR_TO_STR(T[] arr, boolean deleteLast) {
+        return ARR_TO_STR(arr, Preprocessor.tknzr, deleteLast);
+    }
+
+    private static <T> String ARR_TO_STR(T[] arr, String tokenizer, boolean deleteLast) {
         StringBuilder sb = new StringBuilder();
         for (T element : arr) {
-            sb.append(element.toString()).append(tknzr);
+            sb.append(element.toString()).append(tokenizer);
         }
-        return sb.toString();
+        return deleteLast ? sb.substring(0, sb.lastIndexOf(tokenizer)) : sb.toString();
     }
 
     //extends an array given varargs.
@@ -175,6 +179,7 @@ public final class Preprocessor {
         System.out.println("\nUnwrapping methods...\n");
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(inf_code));
         //noteme the list is ordered: method_name, params, return type, method_body
+
         Queue<String> instructions = stream(methods.get(indexOfMain(methods)).get(3)); //get the index of the main method (starting point)
 
         int tab = 0; //controls tab length so that user can see going on easier
@@ -216,10 +221,10 @@ public final class Preprocessor {
             //if instruction is a method call
             else if (instruction.toString().contains(".")) {
                 opcode = "call";
-                lhs = instruction.substring(instruction.indexOf("(") + 1, instruction.indexOf(")")).split(","); //get params
+                lhs = instruction.substring(instruction.indexOf("(") + 1, instruction.indexOf(")")).split(pdelim); //get params
                 rhs = instruction.substring(instruction.indexOf(".") + 1, instruction.indexOf("(")); //get method name
                 String function = instruction.substring(0, instruction.indexOf(".")); //get the library
-                instruction.replace(0, instruction.length(), opcode + tknzr + function + tknzr + rhs + tknzr + ARR_TO_STR(lhs)); //add instruction
+                instruction.replace(0, instruction.length(), opcode + tknzr + function + tknzr + rhs + tknzr + ARR_TO_STR(lhs, pdelim, true)); //add instruction
             }
             //if the "=" operator is present then a value is being set or created to another
             else if (instruction.toString().contains("=")) {
@@ -229,7 +234,7 @@ public final class Preprocessor {
                 //if lhs >= 2 then its probably creating a value
                 //else its probably setting a value
                 opcode = lhs.length >= 2 ? "mal" : "set";
-                instruction.append(opcode).append(tknzr).append(ARR_TO_STR(lhs)).append(rhs).append(tknzr); //add instruction
+                instruction.append(opcode).append(tknzr).append(ARR_TO_STR(lhs, false)).append(rhs).append(tknzr); //add instruction
             }
             System.out.println("Instruction: " + instruction);
             bos.write(instruction.toString().getBytes()); //write the instruction in the proper format

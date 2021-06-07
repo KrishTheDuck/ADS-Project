@@ -1,21 +1,22 @@
-mal  int  a  100
-mal  int  b  200
-mal  int  c  300
-mal  int  d  400
+mal  int  a  100  
+mal  int  b  200  
+mal  int  c  300  
+mal  int  d  400  
 entr  scope1
-	mal  int  f  100
+	mal  int  f  100  
 	entr  scope2
-		mal  int  e  100
+		mal  int  e  100  
 		end  scope2
 	end  scope1
 entr  if  100 >= 20 > 10
 	entr  if  30 > 2
-		set  d  20 * 10
+		set  d  20 * 10  
 		end  if
-	set  b  10
-	set  a  10
-	set  d  10
+	set  b  10  
+	set  a  10  
+	set  d  10  
 	end  if
-mal  int  e  100 + 200 + 300 + 400
-call  stdio  printf  " "  a  b  c  d  e  
+mal  int  e  100 + 200 + 300 + 400  
+call  stdio  printd  " ",a,b,c,d,e
+call  stdio  printf  "a=$[a] b=$[b] c=$[c]"
 EXIT

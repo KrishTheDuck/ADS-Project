@@ -3,7 +3,7 @@
 # note: floating points don't work. Even division results in int casting. Test accordingly.
 # note: variable exchange does not work. Test accordingly.
 
-$ int main(){
+@ int main(){
     # initialize a block of variables
     int a = 100;
     int b = 200;
@@ -31,5 +31,6 @@ $ int main(){
     int e = 100 + 200 + 300 + 400;
 
     #print all
-    stdio.printf(" ",a,b,c,d,e);
+    stdio.printd(" ",a,b,c,d,e);
+    stdio.printf("a=$[a] b=$[b] c=$[c]");
 }

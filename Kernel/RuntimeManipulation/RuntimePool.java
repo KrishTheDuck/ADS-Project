@@ -31,6 +31,14 @@ public class RuntimePool {
         return __RVM__.value(name);
     }
 
+    public static String setValue(String name, String value) {
+        return __RVM__.setValue(name, value.getBytes());
+    }
+
+    public static String setValue(String name, byte[] value) {
+        return __RVM__.setValue(name, value);
+    }
+
     public static String datatype(String name) {
         return __RVM__.datatype(name);
     }

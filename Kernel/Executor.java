@@ -134,38 +134,38 @@ public final class Executor {
         }
     }
 
+    //todo implement set to method
     public static void ExecutionEngine(String line) throws FunctionNotFoundException, LibraryNotFoundException {
         String[] instructions = line.split(Preprocessor.tknzr);
         System.out.println("Instruction: " + Arrays.toString(instructions));
         switch (instructions[0]) {
-            //name, datatype, value, properties
             case "mal" -> { //mal <properties> <name> <value>
                 //properties
                 String[] properties = instructions[1].split(" ");
                 //value
                 instructions[3] = ReplaceWithValue(instructions[3].split(" "));
                 RuntimePool.commit(instructions[2], properties[properties.length - 1], UniversalParser.evaluate(instructions[3]), properties);
-            }//property, name, value
+            }
             case "set" -> {
                 instructions[2] = ReplaceWithValue(instructions[2].split(" "));
-//                RuntimePool.set("value", instructions[1], UniversalParser.evaluate(instructions[2]));
+                RuntimePool.setValue(instructions[1], UniversalParser.evaluate(instructions[2]));
             }
             //library, function name, args
             case "call" -> {
-                instructions[3] = ReplaceWithValue(instructions[3].split(" "));
-                FLMapper.mapFunctionToExecution(instructions[1], instructions[2], instructions[3].split(" "));
+                System.out.println("Arguments: " + instructions[3]);
+                FLMapper.mapFunctionToExecution(instructions[1], instructions[2], instructions[3]);
             }
         }
+        System.out.println(RuntimePool.__RVM__);
     }
 
     public static String ReplaceWithValue(String... tokens) {
-        Arrays.stream(tokens).filter(token -> token.matches("[a-zA-Z]+[0-9]+")).forEachOrdered(token -> {
-            try {
-                RuntimePool.value(token);
-            } catch (Exception e) {
-                e.printStackTrace();
+        for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
+            if (tokens[i].matches("[a-zA-Z]+[0-9]*")) {
+                System.out.println(tokens[i]);
+                tokens[i] = RuntimePool.value(tokens[i]);
             }
-        });
+        }
         return String.join(" ", tokens);
     }
 }
