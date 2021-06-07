@@ -9,7 +9,7 @@ package Kernel.Data_Structures;
  * @since 1.0
  * Date: May 30, 2021
  */
-public record Pair<K, V>(K key, V value) {
+public record Pair<K, V>(K key, V value) implements Comparable<Pair<K, V>> {
     /**
      * Checks if the key and values for both pairs are equal.
      *
@@ -21,6 +21,11 @@ public record Pair<K, V>(K key, V value) {
         if (p == null) return false;
         return this.key.equals(p.key) && this.value.equals(p.value);
     }
+
+    public boolean equals(K key, V value) {
+        return this.key.equals(key) && this.value.equals(value);
+    }
+
 
     /**
      * Returns String form of Pair.

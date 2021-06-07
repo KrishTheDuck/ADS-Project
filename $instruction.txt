@@ -17,4 +17,5 @@ entr  if  100 >= 20 > 10
 	set  d  10
 	end  if
 mal  int  e  100 + 200 + 300 + 400
+call  stdio  printf  " "  a  b  c  d  e  
 EXIT

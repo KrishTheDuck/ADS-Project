@@ -1,9 +1,9 @@
 package ParserHelper;
 
 import FunctionLibrary.QuickMath;
+import Kernel.Datatypes.IntString;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -25,16 +25,16 @@ public final class UniversalParser {
         String line;
         while (!(line = earliest_expression(expression)).equals(expression)) {
             String ans = evaluate_token(line);
-            System.out.println(line + " = " + ans);
+            //System.out.println(line + " = " + ans);
             expression = expression.replace("(" + line + ")", ans);
-            System.out.println("Expression: " + expression);
+            //System.out.println("Expression: " + expression);
         }
         return evaluate_token(expression);
     }
 
     //evaluates a singular expression token
     private static String evaluate_token(String line) {
-        System.out.println("Input: \"" + line + "\"");
+        //System.out.println("Input: \"" + line + "\"");
 
         StringTokenizer st = new StringTokenizer(line, " ");
         List<Integer> numbers = new ArrayList<>();
@@ -61,11 +61,11 @@ public final class UniversalParser {
                 numbers.add(IntString.stoi(num));
             }
         }
-        System.out.println("Numbers: " + numbers);
-        System.out.println("Operators: " + operators);
+        //System.out.println("Numbers: " + numbers);
+        //System.out.println("Operators: " + operators);
 
         int[] map = Operators.order(operators);
-        System.out.println("Order operators w index: " + Arrays.toString(map));
+        //System.out.println("Order operators w index: " + Arrays.toString(map));
 
         //order of operators
         //evaluate the numbers in order
@@ -97,9 +97,9 @@ public final class UniversalParser {
                 default -> throw new IllegalStateException("Unexpected value: " + op);
             };
 
-            System.out.println("num1: " + num1);
-            System.out.println("num2: " + num2);
-            System.out.println("ans: " + ans);
+            //System.out.println("num1: " + num1);
+            //System.out.println("num2: " + num2);
+            //System.out.println("ans: " + ans);
             //we have the answer but we need to remove the used up numbers and operator
             //but since the index order array will still point to a value after its removed we need to subtract 1 from
             //all the values above the index
@@ -115,11 +115,11 @@ public final class UniversalParser {
                 map[j] = (map[j] > map[i]) ? map[j] - 1 : map[j];
             }
 
-            System.out.println("i: " + i + " -> " + map[i]);
-            System.out.println("Operators: " + operators);
-            System.out.println("Numbers: " + numbers);
-            System.out.println("Map: " + Arrays.toString(map));
-            System.out.println();
+            //System.out.println("i: " + i + " -> " + map[i]);
+            //System.out.println("Operators: " + operators);
+            //System.out.println("Numbers: " + numbers);
+            //System.out.println("Map: " + Arrays.toString(map));
+            //System.out.println();
         }
         return String.valueOf(numbers.remove(0));
     }

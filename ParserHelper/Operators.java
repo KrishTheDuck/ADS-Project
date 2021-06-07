@@ -2,7 +2,7 @@ package ParserHelper;
 
 import Kernel.Data_Structures.OrderedPairList;
 import Kernel.Data_Structures.Pair;
-import Kernel.Data_Structures.PairList;
+import Kernel.Data_Structures.PairCollection;
 import Kernel.Data_Structures.SortedPairList;
 
 import java.util.List;
@@ -11,14 +11,14 @@ import java.util.List;
  * A class that asserts the operator precedence of the language.
  *
  * @author Krish Sridhar
- * @see PairList
+ * @see PairCollection
  * @see SortedPairList
  * @see OrderedPairList
  * @see Pair
  * @since 1.0
  */
-public final class Operators {
-    public static final PairList<String, Integer> operators = new OrderedPairList<>(21) {
+final class Operators {
+    public static final PairCollection<String, Integer> operators = new OrderedPairList<>(21) {
         {
             add("!", 0);
             add("~", 0);
@@ -51,11 +51,11 @@ public final class Operators {
      *
      * @param operators List of operators.
      * @return An integer array containing indexes of which operators to evaluate first, in order of highest to lowest precedence.
-     * @see PairList
+     * @see PairCollection
      * @see OrderedPairList
      */
     public static int[] order(List<String> operators) {
-        PairList<String, Integer> map = new OrderedPairList<>(operators.size());
+        PairCollection<String, Integer> map = new OrderedPairList<>(operators.size());
         for (int i = 0, MAX = operators.size(); i < MAX; i++) {
             map.add(operators.get(i), i);
         }
@@ -63,7 +63,7 @@ public final class Operators {
     }
 
     /**
-     * Accepts a <code>PairList</code> of operators.
+     * Accepts a <code>PairCollection</code> of operators.
      *
      * @param map A List of operator-index pairs.
      * @return An integer array containing indexes of which operators to evaluate first, in order of highest to lowest precedence.
@@ -71,19 +71,19 @@ public final class Operators {
      * @see SortedPairList
      * @see Pair
      */
-    public static int[] order(final PairList<String, Integer> map) {
+    public static int[] order(final PairCollection<String, Integer> map) {
 
-        System.out.println("given map: " + map);
+        //System.out.println("given map: " + map);
 
-        PairList<Integer, Integer> precedence = new SortedPairList<>(map.size());
+        PairCollection<Integer, Integer> precedence = new SortedPairList<>(map.size());
 
         //swap operators for ints
         for (Pair<String, Integer> entry : map) {
-            precedence.add(PairList.getPairFromKey(entry.key(), operators).value(), entry.value());
-            System.out.println(precedence);
+            precedence.add(operators.getPairFromKey(entry.key()).value(), entry.value());
+            //System.out.println(precedence);
         }
 
-        System.out.println("given precedence: " + precedence);
+        //System.out.println("given precedence: " + precedence);
 
         //now precedence is the sorted order
         int[] order = new int[precedence.size()];

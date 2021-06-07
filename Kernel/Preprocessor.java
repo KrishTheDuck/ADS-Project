@@ -39,14 +39,6 @@ public final class Preprocessor {
     private Preprocessor() {
     }
 
-    public static void main(String... args) throws Exception {
-//        Terminal t = Terminal.evoke();
-        Preprocessor c = new Preprocessor(new File("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$Input.txt"));
-        File f = c.compile();
-        System.out.println("Compilation finished. Beginning Execution.");
-//        Executor.InstructionLoader("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$instruction.txt");
-    }
-
     //converts an array of type T to a string that can be appended to the file
     //it uses the compilation tokenizer so that reading from the file can be simple.
     private static <T> String ARR_TO_STR(T[] arr) {
@@ -237,7 +229,7 @@ public final class Preprocessor {
                 //if lhs >= 2 then its probably creating a value
                 //else its probably setting a value
                 opcode = lhs.length >= 2 ? "mal" : "set";
-                instruction.append(opcode).append(tknzr).append(ARR_TO_STR(lhs)).append(rhs); //add instruction
+                instruction.append(opcode).append(tknzr).append(ARR_TO_STR(lhs)).append(rhs).append(tknzr); //add instruction
             }
             System.out.println("Instruction: " + instruction);
             bos.write(instruction.toString().getBytes()); //write the instruction in the proper format

@@ -2,7 +2,6 @@ TODO:
     - Bit-shifting for decimals
     - Structs
     - add more functions to lang through FLibMapper
-    - CONDITIONS!!!!
     - make variable detection not stupid
 
 
@@ -10,8 +9,12 @@ NOTEME:
  Accomplishments:
     - March 15, 2021 11:47PM: language works for basic expressions and initializations!
     - March 17, 2021 9:47PM: Parsers work for all datatypes!
+    - May 30, 2021: Yeah the data got deleted around this time. Universal Parser Works.
+    - June 5, 2021: ABSTRACT SYNTAX TREE WORKS WHOOOOOOOOOOOOOOOOO!!!!
  Thoughts:
-    - If we have a solid StringParser class?
-            why do we need one for chars?
-                we can treat chars as singleton strings
-
+    - What if the language becomes OOP and we have a keyword called "injects" which allows a class to access specific features as long as it
+           follows a few important rules labelled through a Contract that the developer can establish WITHOUT having type equivalence through subclassing?
+    - We need to create some kind of file that will be run first ALWAYS through some kind of marker in the name.
+    - Force inheritance of values
+    - Some way of keeping track a classes methods and states
+    - evolution of types?

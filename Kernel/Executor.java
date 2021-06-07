@@ -1,10 +1,11 @@
 package Kernel;
 
+import FunctionLibrary.FLMapper;
 import Kernel.Data_Structures.AbstractSyntaxTree;
 import Kernel.Data_Structures.Node;
-import Kernel.RuntimeManipulation.RuntimeVariableManipulation;
-import LanguageExceptions.AlreadyCommittedException;
-import LanguageExceptions.NonExistentVariableException;
+import Kernel.RuntimeManipulation.RuntimePool;
+import LanguageExceptions.FunctionNotFoundException;
+import LanguageExceptions.LibraryNotFoundException;
 import ParserHelper.UniversalParser;
 
 import java.io.BufferedReader;
@@ -24,17 +25,12 @@ import java.util.Queue;
  */
 
 public final class Executor {
-    private static RuntimeVariableManipulation rvm;
-
-    public static void main(String[] args) throws Exception {
-        InstructionLoader("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$instruction.txt");
-    }
-
     public static void InstructionLoader(String path) throws Exception {
         InstructionLoader(new File(path));
     }
 
     public static void InstructionLoader(File f) throws Exception {
+//        rvm = new RuntimeVariableManipulation();
         BufferedReader br = new BufferedReader(new FileReader(f));
         AbstractSyntaxTree ast = new AbstractSyntaxTree("start", false);
 
@@ -56,6 +52,7 @@ public final class Executor {
                         ast.add_and_enter(tokens[1], true); //add scope name
                         ast.set_condition(tokens[2]); //set first condition to this
                     }
+                    //todo error set condition to 1
                     case "else" -> {
                         ast.add_and_enter(tokens[1], true); //add scope name
                         ast.load("else");
@@ -75,7 +72,7 @@ public final class Executor {
             }
         }
 
-        System.out.println("Starting execution...");
+        System.out.println("\nStarting execution...\n");
         //time for recursive search
         //first i return to the first node
         ast.head();
@@ -123,19 +120,52 @@ public final class Executor {
                 mainLoop.add(line);
             }
         }
+        System.out.print("\nAST Crawling done: ");
         System.out.println(mainLoop);
+        System.out.println();
+
+        ExecutionEngine(mainLoop);
     }
 
 
-    public static void ExecutionEngine(String... lines) throws AlreadyCommittedException, NonExistentVariableException {
+    public static void ExecutionEngine(Queue<String> lines) throws FunctionNotFoundException, LibraryNotFoundException {
         for (String line : lines) {
-            String[] instructions = line.split(Preprocessor.tknzr);
-            switch (instructions[0]) {
-                //properties, datatype, value
-                case "mal" -> rvm.commit(instructions[2], null, instructions[1], instructions[3]);
-                //property, name, value
-                case "set" -> rvm.set("value", instructions[1], instructions[2]);
+            ExecutionEngine(line);
+        }
+    }
+
+    public static void ExecutionEngine(String line) throws FunctionNotFoundException, LibraryNotFoundException {
+        String[] instructions = line.split(Preprocessor.tknzr);
+        System.out.println("Instruction: " + Arrays.toString(instructions));
+        switch (instructions[0]) {
+            //name, datatype, value, properties
+            case "mal" -> { //mal <properties> <name> <value>
+                //properties
+                String[] properties = instructions[1].split(" ");
+                //value
+                instructions[3] = ReplaceWithValue(instructions[3].split(" "));
+                RuntimePool.commit(instructions[2], properties[properties.length - 1], UniversalParser.evaluate(instructions[3]), properties);
+            }//property, name, value
+            case "set" -> {
+                instructions[2] = ReplaceWithValue(instructions[2].split(" "));
+//                RuntimePool.set("value", instructions[1], UniversalParser.evaluate(instructions[2]));
+            }
+            //library, function name, args
+            case "call" -> {
+                instructions[3] = ReplaceWithValue(instructions[3].split(" "));
+                FLMapper.mapFunctionToExecution(instructions[1], instructions[2], instructions[3].split(" "));
             }
         }
+    }
+
+    public static String ReplaceWithValue(String... tokens) {
+        Arrays.stream(tokens).filter(token -> token.matches("[a-zA-Z]+[0-9]+")).forEachOrdered(token -> {
+            try {
+                RuntimePool.value(token);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        return String.join(" ", tokens);
     }
 }

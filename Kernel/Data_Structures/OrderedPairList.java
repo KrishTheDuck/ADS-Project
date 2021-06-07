@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class OrderedPairList<K, V> extends PairList<K, V> {
+public class OrderedPairList<K, V> extends PairCollection<K, V> {
     private final List<Pair<K, V>> STORED;
 
 
@@ -34,7 +34,7 @@ public class OrderedPairList<K, V> extends PairList<K, V> {
     /**
      * Instantiates the backing ArrayList with some initial size.
      *
-     * @param size Some initial size of the PairList.
+     * @param size Some initial size of the PairCollection.
      */
     public OrderedPairList(int size) {
         STORED = new ArrayList<>(size);
@@ -43,10 +43,26 @@ public class OrderedPairList<K, V> extends PairList<K, V> {
     /**
      * Instantiates the backing ArrayList with a predefined initial capacity.
      *
-     * @see PairList#INIT_CAPACITY
+     * @see PairCollection#INIT_CAPACITY
      */
     public OrderedPairList() {
         STORED = new ArrayList<>(INIT_CAPACITY);
+    }
+
+    @Override
+    public Pair<K, V> getPairFromValue(V value) {
+        for (Pair<K, V> p : STORED)
+            if (p.matchesValue(value))
+                return p;
+        return new Pair<>(null, null);
+    }
+
+    @Override
+    public Pair<K, V> getPairFromKey(K key) {
+        for (Pair<K, V> p : STORED)
+            if (p.matchesKey(key))
+                return p;
+        return new Pair<>(null, null);
     }
 
     /**
@@ -96,4 +112,32 @@ public class OrderedPairList<K, V> extends PairList<K, V> {
     public int size() {
         return STORED.size();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasKey(K key) {
+        for (Pair<K, V> pair : STORED) {
+            if (pair.matchesKey(key)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasValue(V value) {
+        for (Pair<K, V> pair : STORED) {
+            if (pair.matchesValue(value)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Pair<K, V> get(int index) {
+        return STORED.get(index);
+    }
+
 }

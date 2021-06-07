@@ -29,4 +29,7 @@ $ int main(){
 
     # checking result tally
     int e = 100 + 200 + 300 + 400;
+
+    #print all
+    stdio.printf(" ",a,b,c,d,e);
 }

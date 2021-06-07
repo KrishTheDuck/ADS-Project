@@ -1,7 +1,7 @@
 package FunctionLibrary;
 
 import Console.Terminal;
-import Kernel.RuntimeManipulation.RuntimeVariableManipulation;
+import Kernel.RuntimeManipulation.RuntimePool;
 
 import java.util.Arrays;
 
@@ -13,9 +13,8 @@ import java.util.Arrays;
  */
 public final class StandardIO {
     public static void printReplaceVars(String[] message) {
-        RuntimeVariableManipulation rvm = RuntimeVariableManipulation.RVM();
         String arg_delimiter = message[0].replaceAll("\"", "");
-        System.out.println("current args: " + rvm);
+
         //NOTEME we can add special chars to indicate different ways of delimiting the expression >:)
         String delimiter;
         switch (arg_delimiter) {
@@ -24,12 +23,14 @@ public final class StandardIO {
             case "\\t" -> delimiter = "\t";
             default -> delimiter = arg_delimiter;
         }
+
         System.out.println("Delimiter: " + delimiter);
         System.out.println("Message: " + Arrays.toString(message));
         StringBuilder f_message = new StringBuilder();
+
         try {
             for (int i = 1, n = message.length; i < n; i++) {
-                f_message.append(rvm.fetch(message[i].strip())[2]).append(delimiter);
+                f_message.append(RuntimePool.value(message[i])).append(delimiter);
             }
         } catch (Exception e) {
             Terminal.print(false, message);
@@ -37,9 +38,4 @@ public final class StandardIO {
         }
         Terminal.println(false, f_message.toString());
     }
-
-//    public static String input(){
-//        return Terminal.readInput();
-//    }
-
 }

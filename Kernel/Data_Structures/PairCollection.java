@@ -13,48 +13,32 @@ import java.util.Iterator;
  * @since 1.0
  * Date: May 30, 2021
  */
-public abstract class PairList<K, V> implements Iterable<Pair<K, V>> {
+public abstract class PairCollection<K, V> implements Iterable<Pair<K, V>> {
     /**
-     * States the default initial capacity for all PairList implementations.
+     * States the default initial capacity for all PairCollection implementations.
      *
      * @implNote Default initial capacity can be changed in accordance with what is necessary for the implementation.
      */
     protected static final byte INIT_CAPACITY = 10; //initial capacity
 
     /**
-     * Finds a Pair given the target key.
-     *
-     * @param key    Given some object signifying the key.
-     * @param STORED Some PairList implementation.
-     * @param <K>    any object type K matching the type of PairList and key
-     * @param <V>    any object type V matching the type of PairList
-     * @return first pair when found or Pair with null values when nothing is found.
-     */
-    public static <K, V> Pair<K, V> getPairFromKey(K key, PairList<K, V> STORED) {
-        for (Pair<K, V> p : STORED)
-            if (p.matchesKey(key))
-                return p;
-        return new Pair<>(null, null);
-    }
-
-    /**
      * Finds a Pair given the target value.
      *
-     * @param value  Given some object signifying the value.
-     * @param STORED Some PairList implementation.
-     * @param <K>    any object type K matching the type of PairList
-     * @param <V>    any object type V matching the type of PairList and value
+     * @param value Given some object signifying the value.
      * @return first pair when found or Pair with null values when nothing is found.
      */
-    public static <K, V> Pair<K, V> getPairFromValue(V value, PairList<K, V> STORED) {
-        for (Pair<K, V> p : STORED)
-            if (p.matchesValue(value))
-                return p;
-        return new Pair<>(null, null);
-    }
+    public abstract Pair<K, V> getPairFromValue(V value);
 
     /**
-     * Adds a value to the PairList.
+     * Finds a Pair given the target key.
+     *
+     * @param key Given some object signifying the key.
+     * @return first pair when found or Pair with null values when nothing is found.
+     */
+    public abstract Pair<K, V> getPairFromKey(K key);
+
+    /**
+     * Adds a value to the PairCollection.
      *
      * @param key   Given some object signifying the key.
      * @param value Given some object signifying the value.
@@ -63,7 +47,7 @@ public abstract class PairList<K, V> implements Iterable<Pair<K, V>> {
     public abstract boolean add(K key, V value);
 
     /**
-     * Removes a value from the PairList.
+     * Removes a value from the PairCollection.
      *
      * @param key   Given some object signifying the key.
      * @param value Given some object signifying the value.
@@ -86,9 +70,31 @@ public abstract class PairList<K, V> implements Iterable<Pair<K, V>> {
 
 
     /**
-     * Returns size of the PairList.
+     * Returns size of the PairCollection.
      *
      * @return integer signifying size.
      */
     public abstract int size();
+
+    /**
+     * Returns if collection has key given.
+     *
+     * @return boolean if collection has key
+     */
+    public abstract boolean hasKey(K key);
+
+    /**
+     * Returns if collection has value given.
+     *
+     * @return boolean if collection has value
+     */
+    public abstract boolean hasValue(V value);
+
+    /**
+     * Fetches the pair from the list.
+     *
+     * @param index Any object value
+     * @return Pair if found, null if not
+     */
+    public abstract Pair<K, V> get(int index);
 }

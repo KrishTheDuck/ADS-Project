@@ -5,19 +5,19 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * A PairList implementation that maintains sorted order through insertion.
+ * A PairCollection implementation that maintains sorted order through insertion.
  *
  * @param <K> Any comparable object
  * @param <V> Any comparable object
  * @author Krish Sridhar♦
  * @implNote Worst-Case insertion is O(n)
- * @see PairList
+ * @see PairCollection
  * @see Pair
  * @see ArrayList
  * @since 1.0
  * Date: May 30, 2021
  */
-public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> extends PairList<K, V> {
+public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> extends PairCollection<K, V> {
     private final List<Pair<K, V>> STORED; //backing arraylist.
 
     /**
@@ -45,7 +45,7 @@ public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> ex
     /**
      * Instantiates the backing ArrayList with some initial size.
      *
-     * @param size Some initial size of the PairList.
+     * @param size Some initial size of the PairCollection.
      */
     public SortedPairList(int size) {
         STORED = new ArrayList<>(size);
@@ -54,10 +54,20 @@ public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> ex
     /**
      * Instantiates the backing ArrayList with a predefined initial capacity.
      *
-     * @see PairList#INIT_CAPACITY
+     * @see PairCollection#INIT_CAPACITY
      */
     public SortedPairList() {
         STORED = new ArrayList<>(INIT_CAPACITY);
+    }
+
+    @Override
+    public Pair<K, V> getPairFromValue(V value) {
+        return b_search(size(), 0, null, value);
+    }
+
+    @Override
+    public Pair<K, V> getPairFromKey(K key) {
+        return b_search(size(), 0, key, null);
     }
 
     /**
@@ -93,35 +103,21 @@ public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> ex
      */
     @Override
     public boolean remove(K key, V value) {
-        Pair<K, V> target = new Pair<>(key, value);
         int min = 0;
         int max = size() - 1;
 
-        if (STORED.get(min).equals(target)) {
+        if (STORED.get(min).equals(key, value)) {
             STORED.remove(min);
             return true;
         }
 
-        if (STORED.get(max).equals(target)) {
+        if (STORED.get(max).equals(key, value)) {
             STORED.remove(max);
             return true;
         }
 
-        int mid = (min + max) / 2;
-
-        while (mid != min && mid != max) {
-            if (STORED.get(mid).key().compareTo(target.key()) > 0) { //curr is greater than target
-                max = mid;
-                mid = (max + min) / 2;
-            } else if (STORED.get(mid).key().compareTo(target.key()) < 0) { //curr is less than target
-                min = mid;
-                mid = (max + min) / 2;
-            } else if (STORED.get(mid).key().equals(target.key())) { //equality reached
-                STORED.remove(mid);
-                return true;
-            }
-        }
-        return false;
+        Pair<K, V> target;
+        return (target = b_search(max, min, key, value)) != null && STORED.remove(target);
     }
 
 
@@ -147,5 +143,63 @@ public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> ex
     @Override
     public int size() {
         return STORED.size();
+    }
+
+    @Override
+    public boolean hasKey(K key) {
+        return b_search(STORED.size(), 0, key, null) != null;
+    }
+
+    public boolean hasValue(V value) {
+        return false;
+    }
+
+    @Override
+    public Pair<K, V> get(int index) {
+        return STORED.get(index);
+    }
+
+    private Pair<K, V> b_search(int max, int min, K key, V value) {
+        int mid = (min + max) / 2;
+        Pair<K, V> target = new Pair<>(key, value);
+
+        if (value != null && key != null) {
+            while (mid != min && mid != max) {
+                if (STORED.get(mid).key().compareTo(key) > 0) { //curr is greater than target
+                    max = mid;
+                    mid = (max + min) / 2;
+                } else if (STORED.get(mid).key().compareTo(key) < 0) { //curr is less than target
+                    min = mid;
+                    mid = (max + min) / 2;
+                } else if (STORED.get(mid).equals(target)) { //equality reached
+                    return STORED.get(mid);
+                }
+            }
+        } else if (value == null) {
+            while (mid != min && mid != max) {
+                if (STORED.get(mid).key().compareTo(key) > 0) { //curr is greater than target
+                    max = mid;
+                    mid = (max + min) / 2;
+                } else if (STORED.get(mid).key().compareTo(key) < 0) { //curr is less than target
+                    min = mid;
+                    mid = (max + min) / 2;
+                } else if (STORED.get(mid).key().equals(key)) { //equality reached
+                    return STORED.get(mid);
+                }
+            }
+        } else {
+            while (mid != min && mid != max) {
+                if (STORED.get(mid).value().compareTo(value) > 0) { //curr is greater than target
+                    max = mid;
+                    mid = (max + min) / 2;
+                } else if (STORED.get(mid).value().compareTo(value) < 0) { //curr is less than target
+                    min = mid;
+                    mid = (max + min) / 2;
+                } else if (STORED.get(mid).value().equals(value)) { //equality reached
+                    return STORED.get(mid);
+                }
+            }
+        }
+        return null;
     }
 }

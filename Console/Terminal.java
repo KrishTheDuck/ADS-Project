@@ -27,12 +27,12 @@ import java.io.OutputStream;
  */
 public final class Terminal extends JFrame {
     private static BufferedOutputStream nbos; //native buffered output stream
-    private JPanel contentPane;
-    private JTextField command_input;
-    private JTextArea command_output;
+    private final JTextField command_input = new JTextField();
+    private final JTextArea command_output = new JTextArea();
 
     //set up how the GUI behaves and looks
     public Terminal() {
+        JPanel contentPane = new JPanel();
         setContentPane(contentPane); //little to no idea what this does
         setPreferredSize(new Dimension(800, 450)); //create a gui with 800x450
         command_output.setEditable(false); //you cant edit the output pane
