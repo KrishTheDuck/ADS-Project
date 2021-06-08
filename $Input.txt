@@ -4,8 +4,7 @@
 
 @ #[properties]
 int main(){
-    stdio.print("Enter your age: ");
-    int age = stdio.readLine();
-    stdio.printf("age=$(age)");
-    int comparison = 30;
+   stdio.print("Enter your age: ");
+   int i = stdio.readLine();
+   stdio.printf("Your age is $(i)");
 }

@@ -156,8 +156,8 @@ public final class Executor {
             }
             //library, function name, args
             case "call" -> {
-                System.out.println("Arguments: " + instructions[3]);
-                FLMapper.mapFunctionToExecution(instructions[1], instructions[2], instructions[3]);
+                FLMapper.mapFunctionToExecution(instructions[1], instructions[2], instructions.length == 3 ? "" : instructions[3]);
+                FLMapper.mapFunctionToExecution(instructions[1], instructions[2], instructions.length == 3 ? "" : instructions[3]);
             }
         }
         System.out.println(RuntimePool.__RVM__);

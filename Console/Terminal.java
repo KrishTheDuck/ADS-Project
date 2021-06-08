@@ -13,11 +13,12 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Scanner;
 
 public class Terminal extends JFrame {
     private static BufferedOutputStream nbos;
     private static JTextAreaInputStream nbis;
+    private static volatile boolean isReading = false;
+    private static byte[] buffer;
     private JTextField input;
     private JTextArea output;
     private JPanel content;
@@ -54,15 +55,21 @@ public class Terminal extends JFrame {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     String command = input.getText();
                     print(true, command);
+
                     input.setText("");
-                    nbis.updateBuffer(command);
-                    command = (parse(command.split(" ")));
-                    print(false, command);
+
+                    buffer = command.getBytes();
+                    nbis.updateBuffer(buffer);
+                    if (!isReading)
+                        command = (parse(command.split(" ")));
+                    else
+                        command = "Input received returning";
+                    println(false, command);
                 }
             }
         });
 
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
@@ -72,13 +79,18 @@ public class Terminal extends JFrame {
         content.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
-    public static byte[] readLine() {
-        Scanner scan;
-        return nbis.flush();
+    public static synchronized byte[] readLine() {
+        isReading = true;
+        byte[] arr = nbis.flush();
+        isReading = false;
+        return arr;
     }
 
     public static void println(boolean userPrints, String... s) {
         try {
+            if (buffer[buffer.length - 1] != '\n') {
+                nbos.write('\n');
+            }
             if (userPrints)
                 for (String str : s)
                     nbos.write(("$User: " + str + "\n").getBytes());
@@ -88,6 +100,7 @@ public class Terminal extends JFrame {
             nbos.write(10);
             nbos.flush();
         } catch (Exception e) {
+            e.printStackTrace();
             e.printStackTrace();
         }
     }
@@ -103,7 +116,6 @@ public class Terminal extends JFrame {
 
             for (String str : message)
                 nbos.write(str.getBytes());
-            nbos.write(10);
             nbos.flush();
         } catch (Exception e) {
             e.printStackTrace();
@@ -138,10 +150,11 @@ public class Terminal extends JFrame {
         } catch (Exception ignored) {
         }
         dispose();
+        System.exit(0);
     }
 
     //See the Terminal_Commands enumeration to see all supported commands
-    private String parse(String[] args) {
+    private synchronized String parse(String[] args) {
         char operator = args[0].charAt(0); //stores operator
         String cmd = args[0].substring(1); //stores issued command
         System.out.println(cmd);
@@ -150,10 +163,13 @@ public class Terminal extends JFrame {
                 case "help" -> print_commands(); //print all commands
                 case "rnr" -> execute(args[1], false); //run a program by accepting a file path
                 case "run" -> execute(args[1], true);
-                case "readLine" -> new String(nbis.flush());
                 case "exit" -> exitAndReturn();
                 default -> "Error: \"" + cmd + "\" is an unsupported command"; //jic user thinks he's funny
             };
+        } else if (isReading) {
+            isReading = false;
+            notifyAll();
+            return "thank you for the input!";
         } else {
             return "Error: Operator \"" + operator + "\" is an unsupported operator";
         }
@@ -195,6 +211,7 @@ public class Terminal extends JFrame {
     }
 
     private static class JTextAreaInputStream {
+        public static boolean transfer = true;
         private byte[] buffer;
 
         private JTextAreaInputStream(final JTextArea command_output) {
@@ -202,14 +219,27 @@ public class Terminal extends JFrame {
             this.buffer = arr[arr.length - 1].getBytes();
         }
 
-        public void updateBuffer(String line) {
-            buffer = line.getBytes();
+        public synchronized void updateBuffer(byte[] line) {
+            buffer = line;
+            transfer = false;
+            notifyAll();
         }
 
-        public byte[] flushWith(String new_line) {
-            byte[] prev = buffer;
-            this.buffer = new_line.getBytes();
-            return prev;
+        public synchronized byte[] flush() {
+            if (isReading) {
+                while (transfer) {
+                    try {
+                        System.out.println("Waiting for input...");
+                        wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                transfer = true;
+                notifyAll();
+                return buffer;
+            }
+            return new byte[0];
         }
     }
 

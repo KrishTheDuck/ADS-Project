@@ -87,14 +87,17 @@ public final class StandardIO {
         }
     }
 
-    public static byte[] readLine() {
-        return Terminal.readLine();
+    public static String readLine() {
+        byte[] input = Terminal.readLine();
+        System.out.println("input: " + Arrays.toString(input));
+        System.out.println("input stringified: " + new String(input));
+        return new String(input);
     }
 
     public static boolean print(String args) {
         try {
             args = args.replace("\"", "");
-            Terminal.println(false, args);
+            Terminal.print(false, args);
             return true;
         } catch (Exception e) {
             Terminal.print(false, args);

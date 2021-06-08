@@ -1,5 +1,4 @@
 call  stdio  print  "Enter your age: "
-mal  int  age  call  stdio  readLine  
-call  stdio  printf  "age=$(age)"
-mal  int  comparison  30
+mal  int  i  call  stdio  readLine  
+call  stdio  printf  "Your age is $(i)"
 EXIT
