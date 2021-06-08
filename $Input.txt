@@ -1,36 +1,11 @@
 # Test code for 6.14.2021
 # Testing reading and execution of conditional branches through AbstractSyntaxTree
 # note: floating points don't work. Even division results in int casting. Test accordingly.
-# note: variable exchange does not work. Test accordingly.
 
-@ int main(){
-    # initialize a block of variables
-    int a = 100;
-    int b = 200;
-    int c = 300;
-    int d = 400;
-
-    scope1: { # scope 1
-        int f = 100;
-        scope2:{ # scope 2
-            int e = 100;
-        } # end of scope 2, e should be deleted
-    }  # end of scope 1, f should be deleted
-
-    # "rigorous" testing
-    if(100 >= 20 > 10) {
-        if(30 > 2){
-            d = 20 * 10;
-        }
-        b = 10;
-        a = 10;
-        d = 10;
-    }
-
-    # checking result tally
-    int e = 100 + 200 + 300 + 400;
-
-    #print all
-    stdio.printd(" ",a,b,c,d,e);
-    stdio.printf("a=$[a] b=$[b] c=$[c]");
+@ #[properties]
+int main(){
+    stdio.print("Enter your age: ");
+    int age = stdio.readLine();
+    stdio.printf("age=$(age)");
+    int comparison = 30;
 }

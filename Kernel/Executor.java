@@ -52,10 +52,10 @@ public final class Executor {
                         ast.add_and_enter(tokens[1], true); //add scope name
                         ast.set_condition(tokens[2]); //set first condition to this
                     }
-                    //todo error set condition to 1
                     case "else" -> {
+                        System.out.println("\tConditional: else");
                         ast.add_and_enter(tokens[1], true); //add scope name
-                        ast.load("else");
+                        ast.set_condition("1");
                     }
                     default -> ast.add_and_enter(tokens[1], false); //not a condition just a custom scope
                 }
@@ -86,7 +86,7 @@ public final class Executor {
         while (!(line = current.pop()).equals("EXIT")) { //keep iterating
             String[] tokens = line.split(Preprocessor.tknzr);
             System.out.println("\tTOKENS: " + Arrays.toString(tokens));
-            if (tokens[0].equals("chk")) {
+            if (tokens[0].equals("chk")) { //chk child
                 if ("if".equals(tokens[1]) || "elif".equals(tokens[1])) { //conditional
                     Node checking = current.find(tokens[1]);
                     boolean enter = !UniversalParser.evaluate(checking.condition()).equals("0");
@@ -139,12 +139,16 @@ public final class Executor {
         String[] instructions = line.split(Preprocessor.tknzr);
         System.out.println("Instruction: " + Arrays.toString(instructions));
         switch (instructions[0]) {
-            case "mal" -> { //mal <properties> <name> <value>
+            case "mal" -> { //mal <properties> <name> <value> OR mal <properties> <name> call <library> <function_name> <args>
                 //properties
                 String[] properties = instructions[1].split(" ");
-                //value
-                instructions[3] = ReplaceWithValue(instructions[3].split(" "));
-                RuntimePool.commit(instructions[2], properties[properties.length - 1], UniversalParser.evaluate(instructions[3]), properties);
+                String value;
+                if (instructions[3].equals("call")) {
+                    value = FLMapper.mapFunctionToExecution(instructions[4], instructions[5], (instructions.length == 7) ? instructions[6] : "").toString();
+                } else {
+                    value = ReplaceWithValue(instructions[3].split(" "));
+                }
+                RuntimePool.commit(instructions[2], properties[properties.length - 1], UniversalParser.evaluate(value), properties);
             }
             case "set" -> {
                 instructions[2] = ReplaceWithValue(instructions[2].split(" "));

@@ -11,28 +11,25 @@ public final class FLMapper {
         switch (library.toLowerCase()) {
             case "stdio" -> {
                 switch (function_name) {
-                    case "printd" -> {
-                        StandardIO.printDelimited(args);
-                        return true;
-                    }
                     case "printf" -> {
-                        StandardIO.printFormat(args);
-                        return true;
+                        return StandardIO.printFormat(args);
                     }
-                    case "read" -> {
-//                        StandardIO.input();
-                        return true;
+                    case "printd" -> {
+                        return StandardIO.printDelimited(args);
                     }
-
-                    default -> throw new FunctionNotFoundException("Function in library StandardIO does not exist!");
+                    case "print" -> {
+                        return StandardIO.print(args);
+                    }
+                    case "readLine" -> {
+                        return StandardIO.readLine();
+                    }
+                    default -> throw new IllegalStateException("Function does not exist in library \"" + library + "\": " + function_name);
                 }
             }
             case "qmth" -> {
-                switch (function_name) {
-                    default -> throw new FunctionNotFoundException("Function in library StandardIO does not exist!");
-                }
+                throw new LibraryNotFoundException("QMTH library not implemented");
             }
-            default -> throw new LibraryNotFoundException("Support for library \"" + library + "\" is not native.");
+            default -> throw new LibraryNotFoundException("Library is not supported: " + library.toLowerCase());
         }
     }
 }

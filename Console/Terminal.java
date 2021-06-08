@@ -11,10 +11,13 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Scanner;
 
 public class Terminal extends JFrame {
     private static BufferedOutputStream nbos;
+    private static JTextAreaInputStream nbis;
     private JTextField input;
     private JTextArea output;
     private JPanel content;
@@ -50,9 +53,9 @@ public class Terminal extends JFrame {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     String command = input.getText();
-
                     print(true, command);
                     input.setText("");
+                    nbis.updateBuffer(command);
                     command = (parse(command.split(" ")));
                     print(false, command);
                 }
@@ -67,6 +70,11 @@ public class Terminal extends JFrame {
             }
         });
         content.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }
+
+    public static byte[] readLine() {
+        Scanner scan;
+        return nbis.flush();
     }
 
     public static void println(boolean userPrints, String... s) {
@@ -108,7 +116,13 @@ public class Terminal extends JFrame {
         dialog.setVisible(true);
         dialog.output.setText("Terminal Commands...\n");
         nbos = new BufferedOutputStream(new JTextAreaOutputStream(dialog.output));
-        dialog.print_commands();
+        nbis = new JTextAreaInputStream(dialog.output);
+        try {
+            nbos.write(dialog.print_commands().getBytes());
+            nbos.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return dialog;
     }
 
@@ -117,7 +131,6 @@ public class Terminal extends JFrame {
     public static void main(String... args) {
         evoke();
     }
-    //See the Terminal_Commands enumeration to see all supported commands
 
     private void onCancel() {
         try {
@@ -127,6 +140,7 @@ public class Terminal extends JFrame {
         dispose();
     }
 
+    //See the Terminal_Commands enumeration to see all supported commands
     private String parse(String[] args) {
         char operator = args[0].charAt(0); //stores operator
         String cmd = args[0].substring(1); //stores issued command
@@ -136,6 +150,7 @@ public class Terminal extends JFrame {
                 case "help" -> print_commands(); //print all commands
                 case "rnr" -> execute(args[1], false); //run a program by accepting a file path
                 case "run" -> execute(args[1], true);
+                case "readLine" -> new String(nbis.flush());
                 case "exit" -> exitAndReturn();
                 default -> "Error: \"" + cmd + "\" is an unsupported command"; //jic user thinks he's funny
             };
@@ -171,12 +186,31 @@ public class Terminal extends JFrame {
     }
 
     private String print_commands() {
-        StringBuilder sb = new StringBuilder("\n-------------------------------------------------------------");
+        StringBuilder sb = new StringBuilder("\n-------------------------------------------------------------\n");
         for (Terminal_Commands cmd : Terminal_Commands.values()) {
             sb.append(cmd).append(">> ").append(cmd.description()).append("\n"); // command>>description
         }
-        sb.append("-------------------------------------------------------------");
+        sb.append("-------------------------------------------------------------\n");
         return sb.toString();
+    }
+
+    private static class JTextAreaInputStream {
+        private byte[] buffer;
+
+        private JTextAreaInputStream(final JTextArea command_output) {
+            String[] arr = command_output.getText().split("\n");
+            this.buffer = arr[arr.length - 1].getBytes();
+        }
+
+        public void updateBuffer(String line) {
+            buffer = line.getBytes();
+        }
+
+        public byte[] flushWith(String new_line) {
+            byte[] prev = buffer;
+            this.buffer = new_line.getBytes();
+            return prev;
+        }
     }
 
     private static class JTextAreaOutputStream extends OutputStream {

@@ -41,8 +41,8 @@ public final class Preprocessor {
 
     //converts an array of type T to a string that can be appended to the file
     //it uses the compilation tokenizer so that reading from the file can be simple.
-    private static <T> String ARR_TO_STR(T[] arr, boolean deleteLast) {
-        return ARR_TO_STR(arr, Preprocessor.tknzr, deleteLast);
+    private static <T> String ARR_TO_STR(T[] arr) {
+        return ARR_TO_STR(arr, Preprocessor.tknzr, false);
     }
 
     private static <T> String ARR_TO_STR(T[] arr, String tokenizer, boolean deleteLast) {
@@ -114,7 +114,6 @@ public final class Preprocessor {
 
     //streams the source code into each instruction
     private Queue<String> stream(String method_body) throws IOException {
-
         BufferedInputStream bis = new BufferedInputStream(new ByteArrayInputStream(method_body.getBytes(StandardCharsets.UTF_8)));
         Queue<String> list = new LinkedList<>(); //the list of instructions
         Stack<String> scopes = new Stack<>(); //keeps track of entering scopes
@@ -129,17 +128,31 @@ public final class Preprocessor {
                     if (acc.toString().strip().startsWith("if")) { //if condition scope
                         scope = "if";
                         scopes.push(scope);
+                        acc.insert(0, "pds ");
                     } else if (acc.toString().strip().startsWith("else if")) { //else if
                         scope = "elif";
                         scopes.push(scope);
+                        acc.insert(0, "pds ");
                     } else if (acc.toString().strip().startsWith("else")) { //else
                         scope = "else";
                         scopes.push(scope);
+                        acc.insert(0, "pds ");
+                    } else if (acc.toString().strip().startsWith("for")) {
+                        scope = "for";
+                        scopes.push(scope);
+                        acc.insert(0, "pds ");
+                    } else if (acc.toString().strip().startsWith("do")) {
+                        scope = "do_while";
+                        scopes.push(scope);
+                        acc.insert(0, "pds ");
+                    } else if (acc.toString().strip().startsWith("while")) {
+                        scope = "while";
+                        scopes.push(scope);
+                        acc.insert(0, "pds ");
                     } else if (acc.toString().strip().endsWith(":")) { //a custom scope "<scope name> : {}", ":" operator indicates the name of scope
                         scope = acc.substring(0, acc.indexOf(":")).strip(); //uds: user defined scope
                         scopes.push(scope);
                         acc.delete(0, acc.length());
-                        acc.append("uds ").append(scope);
                     }
                     list.add(acc.toString().strip()); //add the instruction
                     acc.delete(0, acc.length()); //clear the string
@@ -180,14 +193,14 @@ public final class Preprocessor {
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(inf_code));
         //noteme the list is ordered: method_name, params, return type, method_body
 
+        //todo the way i read in instructions must be changed
         Queue<String> instructions = stream(methods.get(indexOfMain(methods)).get(3)); //get the index of the main method (starting point)
-
         int tab = 0; //controls tab length so that user can see going on easier
         System.out.println(instructions);
         while (instructions.size() > 0) { //pop instructions
-            String[] lhs; //left hand side of instruction
-            String rhs; //right hand side of instruction
-            String opcode; //operation code of instruction -> indicates what operation to do
+            String lhs = ""; //left hand side of instruction
+            String rhs = ""; //right hand side of instruction
+            String opcode = ""; //operation code of instruction -> indicates what operation to do
             StringBuilder instruction = new StringBuilder(instructions.remove()); //stores the entire instruction
             System.out.println("Instruction: " + instruction);
 
@@ -195,48 +208,67 @@ public final class Preprocessor {
                 bos.write(9);
             }
 
+            String i = instruction.toString();
             //each instruction is of form: opcode lhs rhs
-            if (instruction.toString().startsWith("uds")) { //user defined scope todo add some functionality
+            if (i.startsWith("uds")) { //user defined scope todo add some functionality
                 ++tab;
                 opcode = instruction.substring(4);
                 instruction.delete(0, instruction.length());
                 instruction.append("entr").append(tknzr).append(opcode);
             }
-            //if the instruction is indicating a conditional scope
-            else if (instruction.toString().startsWith("if") || instruction.toString().startsWith("else if")) {
-                ++tab; //increase tab
-                opcode = (instruction.toString().startsWith("else if")) ? "elif" : "if"; //opcode
-                rhs = instruction.substring(instruction.indexOf("(") + 1, instruction.indexOf(")")); //get the condition
+            //if the instruction is indicating a predefined scope
+            else if (i.startsWith("pds")) {
+                i = i.substring(3).strip();
+                ++tab;
+                if (i.startsWith("if")) {
+                    opcode = "if";
+                    rhs = instruction.substring(instruction.indexOf("(") + 1, instruction.lastIndexOf(")")); //get the condition
+                } else if (i.startsWith("else if")) {
+                    opcode = "elif";
+                    rhs = instruction.substring(instruction.indexOf("(") + 1, instruction.lastIndexOf(")")); //get the condition
+                } else if (i.startsWith("else")) {
+                    opcode = "else";
+                    rhs = "";
+                } else if (i.startsWith("for")) {
+                    opcode = "for";
+                    rhs = instruction.substring(instruction.indexOf("(") + 1, instruction.lastIndexOf(")")); //get the condition
+                } else if (i.startsWith("do")) {
+                    opcode = "do_while";
+                    rhs = instruction.substring(instruction.indexOf("(") + 1, instruction.lastIndexOf(")")); //get the condition
+                } else if (i.startsWith("while")) {
+                    opcode = "while";
+                    rhs = instruction.substring(instruction.indexOf("(") + 1, instruction.lastIndexOf(")")); //get the condition
+                }
                 instruction.delete(0, instruction.length()); //clear the string
                 instruction.append("entr").append(tknzr).append(opcode).append(tknzr).append(rhs); //add the instruction
-            } else if (instruction.toString().startsWith("else")) {
-                instruction.delete(0, instruction.length()); //delete instruction
-                ++tab; //increase tab
-                instruction.append("entr").append(tknzr).append("else"); //add instruction
-            }
-            //if the instruction is indicating an end of scope
-            else if (instruction.toString().startsWith("end")) {
+            } else if (i.startsWith("end")) {
                 --tab;//decrease tab size
             }
-            //if instruction is a method call
-            else if (instruction.toString().contains(".")) {
-                opcode = "call";
-                lhs = instruction.substring(instruction.indexOf("(") + 1, instruction.indexOf(")")).split(pdelim); //get params
-                rhs = instruction.substring(instruction.indexOf(".") + 1, instruction.indexOf("(")); //get method name
-                String function = instruction.substring(0, instruction.indexOf(".")); //get the library
-                instruction.replace(0, instruction.length(), opcode + tknzr + function + tknzr + rhs + tknzr + ARR_TO_STR(lhs, pdelim, true)); //add instruction
-            }
             //if the "=" operator is present then a value is being set or created to another
-            else if (instruction.toString().contains("=")) {
-                rhs = instruction.substring(instruction.indexOf("=") + 1).strip(); //get value to set to
-                lhs = instruction.substring(0, instruction.indexOf("=")).strip().split("[ ]+"); //get value and properties
+            else if (i.contains("=") || i.contains(".")) {
+                int e_index = i.indexOf("=");
+                int p_index = i.indexOf(".");
+
+                if (p_index != -1) { //yes method
+                    if (e_index != -1) {
+                        if (e_index < p_index) { //equality first
+                            lhs = ReplaceWithMallocScript(new StringBuilder(i.substring(0, e_index + 1)));
+                            System.out.println(lhs);
+                            rhs = ReplaceWithCallScript(new StringBuilder(i.substring(e_index + 1)));
+                        } else { //normal call
+                            lhs = ReplaceWithCallScript(new StringBuilder(i));
+                        }
+                    } else {//no equality but yes method
+                        rhs = ReplaceWithCallScript(new StringBuilder(i));
+                    }
+                } else { //no method but yes equality
+                    lhs = ReplaceWithMallocScript(new StringBuilder(i));
+                }
+
                 instruction.delete(0, instruction.length()); //clear string
-                //if lhs >= 2 then its probably creating a value
-                //else its probably setting a value
-                opcode = lhs.length >= 2 ? "mal" : "set";
-                instruction.append(opcode).append(tknzr).append(ARR_TO_STR(lhs, false)).append(rhs).append(tknzr); //add instruction
+                instruction.append(lhs).append(rhs);
             }
-            System.out.println("Instruction: " + instruction);
+            System.out.println("\tConversion: " + instruction);
             bos.write(instruction.toString().getBytes()); //write the instruction in the proper format
             bos.write(10); //new line
         }
@@ -256,5 +288,24 @@ public final class Preprocessor {
             ++index;
         }
         return -1;
+    }
+
+    private String ReplaceWithMallocScript(StringBuilder instruction) {
+        String[] lhs = instruction.substring(0, instruction.indexOf("=")).strip().split("[ ]+"); //get value and properties
+        String rhs = instruction.substring(instruction.indexOf("=") + 1).strip();
+        instruction.delete(0, instruction.length()); //clear string
+        //if lhs >= 2 then its probably creating a value else its setting
+        String opcode = lhs.length >= 2 ? "mal" : "set";
+        instruction.append(opcode).append(tknzr).append(ARR_TO_STR(lhs)).append(rhs); //add instruction
+        return instruction.toString();
+    }
+
+    private String ReplaceWithCallScript(StringBuilder instruction) {
+        String opcode = "call";
+        String[] lhs = instruction.substring(instruction.indexOf("(") + 1, instruction.lastIndexOf(")")).split(pdelim); //get params
+        String rhs = instruction.substring(instruction.indexOf(".") + 1, instruction.indexOf("(")).strip(); //get method name
+        String lib = instruction.substring(0, instruction.indexOf(".")).strip(); //get the library
+        instruction.replace(0, instruction.length(), opcode + tknzr + lib + tknzr + rhs + tknzr + ARR_TO_STR(lhs, pdelim, true)); //add instruction
+        return instruction.toString();
     }
 }
