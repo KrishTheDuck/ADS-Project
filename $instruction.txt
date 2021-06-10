@@ -1,4 +1,17 @@
 call  stdio  print  "Enter your age: "
-mal  int  i  call  stdio  readLine  
-call  stdio  printf  "Your age is $(i)"
+mal  int  age  call  stdio  readLine  
+call  stdio  printf  "Your age is $(age)"
+entr  if  0 < age <= 12
+	call  stdio  println  "child"
+	end  if
+entr  elif  12 < age <= 19
+	call  stdio  println  "teen"
+	end  elif
+entr  elif  20 < age < 30
+	call  stdio  println  "young adult"
+	end  elif
+entr  else  
+	call  stdio  println  "older adult"
+	end  else
+call  stdio  printf  "\n\nNice\n\n"
 EXIT

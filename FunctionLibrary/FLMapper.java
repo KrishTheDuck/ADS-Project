@@ -20,6 +20,9 @@ public final class FLMapper {
                     case "print" -> {
                         return StandardIO.print(args);
                     }
+                    case "println" -> {
+                        return StandardIO.println(args);
+                    }
                     case "readLine" -> {
                         return StandardIO.readLine();
                     }

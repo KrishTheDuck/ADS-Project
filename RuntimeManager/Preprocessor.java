@@ -1,4 +1,4 @@
-package Kernel;
+package RuntimeManager;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -12,28 +12,11 @@ import java.util.*;
  * Date: February 24, 2021
  */
 @SuppressWarnings("unused")
-public final class Preprocessor {
+final class Preprocessor {
     public final static String tknzr = "  "; //stores the token that separates meaningful operation codes
     private final static char comment_marker = '#'; //stores the token that indicates a comment
     private final static String mdelim = "@"; //stores method delimiter
     private final static String pdelim = ","; //stores parameter delimiter
-    private File src_code; //source code
-    private File inf_code; //instruction file code
-
-
-    /**
-     * @param program_file Source code file.
-     * @throws FileNotFoundException If the file does not exist or cannot be read.
-     */
-    public Preprocessor(File program_file) throws FileNotFoundException {
-        if (program_file.exists() && program_file.canRead()) {
-            //TODO register file types and check if they correct
-            this.src_code = program_file;
-            this.inf_code = new File("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$instruction.txt");
-        } else {
-            throw new FileNotFoundException();
-        }
-    }
 
     //you cant use me if you don't give me a file.
     private Preprocessor() {
@@ -64,32 +47,9 @@ public final class Preprocessor {
         return n_arr;
     }
 
-    //normalizes source code file by removing extra spaces and comments then storing everything into a StringBuilder object
-    private void normalize(StringBuilder file) throws IOException {
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(src_code));//read in file and store
-        char prev_char = (char) bis.read();
-        char c;
-        while ((c = (char) bis.read()) != '\uFFFF') { //continue until EOF
-            if (prev_char == comment_marker) { //remove comment marker
-                do {
-                    prev_char = (char) bis.read();
-                } while (prev_char != '\n');
-                continue;
-            }
-
-            if (c != '\n' && c != '\r' && c != '\t' && c != '#') { //remove extras
-                if (prev_char == ' ' && c == ' ')
-                    continue;
-                file.append(c);
-            }
-            prev_char = c;
-        }
-        bis.close();
-    }
-
     //converts the source codes methods into a list of lists which contains only the most pertinent information
     //about a method such as the method body, parameters, name, and return signature.
-    private void register_components(List<ArrayList<String>> methods, StringBuilder file) {
+    private static void register_components(List<ArrayList<String>> methods, StringBuilder file) {
         StringTokenizer method_tokenizer = new StringTokenizer(file.toString(), mdelim); //Tokenize by method delimiter
 
         while (method_tokenizer.hasMoreTokens()) { //for every method
@@ -113,7 +73,7 @@ public final class Preprocessor {
     }
 
     //streams the source code into each instruction
-    private Queue<String> stream(String method_body) throws IOException {
+    private static Queue<String> stream(String method_body) throws IOException {
         BufferedInputStream bis = new BufferedInputStream(new ByteArrayInputStream(method_body.getBytes(StandardCharsets.UTF_8)));
         Queue<String> list = new LinkedList<>(); //the list of instructions
         Stack<String> scopes = new Stack<>(); //keeps track of entering scopes
@@ -164,6 +124,59 @@ public final class Preprocessor {
         return list; //return streamed instruction
     }
 
+    //finds where the main method is in the list of methods
+    //simple o(n) search
+    private static int indexOfMain(List<ArrayList<String>> methods) {
+        int index = 0;
+        for (ArrayList<String> method : methods) {
+            if (method.get(0).equals("main"))
+                return index;
+            ++index;
+        }
+        return -1;
+    }
+
+    private static String ReplaceWithMallocScript(StringBuilder instruction) {
+        String[] lhs = instruction.substring(0, instruction.indexOf("=")).strip().split("[ ]+"); //get value and properties
+        String rhs = instruction.substring(instruction.indexOf("=") + 1).strip();
+        instruction.delete(0, instruction.length()); //clear string
+        //if lhs >= 2 then its probably creating a value else its setting
+        String opcode = lhs.length >= 2 ? "mal" : "set";
+        instruction.append(opcode).append(tknzr).append(ARR_TO_STR(lhs)).append(rhs); //add instruction
+        return instruction.toString();
+    }
+
+    private static String ReplaceWithCallScript(StringBuilder instruction) {
+        String opcode = "call";
+        String[] lhs = instruction.substring(instruction.indexOf("(") + 1, instruction.lastIndexOf(")")).split(pdelim); //get params
+        String rhs = instruction.substring(instruction.indexOf(".") + 1, instruction.indexOf("(")).strip(); //get method name
+        String lib = instruction.substring(0, instruction.indexOf(".")).strip(); //get the library
+        instruction.replace(0, instruction.length(), opcode + tknzr + lib + tknzr + rhs + tknzr + ARR_TO_STR(lhs, pdelim, true)); //add instruction
+        return instruction.toString();
+    }
+
+    //normalizes source code file by removing extra spaces and comments then storing everything into a StringBuilder object
+    private static void normalize(StringBuilder file, File src_code) throws IOException {
+        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(src_code));//read in file and store
+        char prev_char = (char) bis.read();
+        char c;
+        while ((c = (char) bis.read()) != '\uFFFF') { //continue until EOF
+            if (prev_char == comment_marker) { //remove comment marker
+                do {
+                    prev_char = (char) bis.read();
+                } while (prev_char != '\n');
+                continue;
+            }
+
+            if (c != '\n' && c != '\r' && c != '\t' && c != '#') { //remove extras
+                if (prev_char == ' ' && c == ' ')
+                    continue;
+                file.append(c);
+            }
+            prev_char = c;
+        }
+        bis.close();
+    }
 
     /**
      * Compiles the source code into language and syntax that the executor can more easily understand.
@@ -171,16 +184,17 @@ public final class Preprocessor {
      * @return Instruction File.
      * @throws IOException When instruction file cannot be created.
      */
-    public File compile() throws IOException {
+    public static File compile(File src_code) throws IOException {
+        File inf_file = new File("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\$instruction.txt");
         StringBuilder file = new StringBuilder(); //store in a string
-        normalize(file); //get rid of random bits of data that are insignificant
+        normalize(file, src_code); //get rid of random bits of data that are insignificant
 
         //create the instruction file
-        if (!this.inf_code.exists()) {
-            if (!this.inf_code.createNewFile())
+        if (!inf_file.exists()) {
+            if (!inf_file.createNewFile())
                 throw new IOException("Instruction file creation failed.");
         } else {
-            System.out.println("file exists at: " + this.inf_code.getAbsolutePath());
+            System.out.println("file exists at: " + inf_file.getAbsolutePath());
         }
 
         System.out.println("This is the normalized file: " + file);
@@ -190,7 +204,7 @@ public final class Preprocessor {
 
 
         System.out.println("\nUnwrapping methods...\n");
-        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(inf_code));
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(inf_file));
         //noteme the list is ordered: method_name, params, return type, method_body
 
         //todo the way i read in instructions must be changed
@@ -275,37 +289,6 @@ public final class Preprocessor {
 
         bos.write("EXIT".getBytes()); //stop signal
         bos.flush();
-        return this.inf_code; //return file
-    }
-
-    //finds where the main method is in the list of methods
-    //simple o(n) search
-    private int indexOfMain(List<ArrayList<String>> methods) {
-        int index = 0;
-        for (ArrayList<String> method : methods) {
-            if (method.get(0).equals("main"))
-                return index;
-            ++index;
-        }
-        return -1;
-    }
-
-    private String ReplaceWithMallocScript(StringBuilder instruction) {
-        String[] lhs = instruction.substring(0, instruction.indexOf("=")).strip().split("[ ]+"); //get value and properties
-        String rhs = instruction.substring(instruction.indexOf("=") + 1).strip();
-        instruction.delete(0, instruction.length()); //clear string
-        //if lhs >= 2 then its probably creating a value else its setting
-        String opcode = lhs.length >= 2 ? "mal" : "set";
-        instruction.append(opcode).append(tknzr).append(ARR_TO_STR(lhs)).append(rhs); //add instruction
-        return instruction.toString();
-    }
-
-    private String ReplaceWithCallScript(StringBuilder instruction) {
-        String opcode = "call";
-        String[] lhs = instruction.substring(instruction.indexOf("(") + 1, instruction.lastIndexOf(")")).split(pdelim); //get params
-        String rhs = instruction.substring(instruction.indexOf(".") + 1, instruction.indexOf("(")).strip(); //get method name
-        String lib = instruction.substring(0, instruction.indexOf(".")).strip(); //get the library
-        instruction.replace(0, instruction.length(), opcode + tknzr + lib + tknzr + rhs + tknzr + ARR_TO_STR(lhs, pdelim, true)); //add instruction
-        return instruction.toString();
+        return inf_file; //return file
     }
 }

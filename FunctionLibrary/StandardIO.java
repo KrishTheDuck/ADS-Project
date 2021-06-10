@@ -1,8 +1,8 @@
 package FunctionLibrary;
 
 import Console.Terminal;
-import Kernel.RuntimeManipulation.RuntimePool;
 import ParserHelper.UniversalParser;
+import RuntimeManager.RuntimePool;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -39,8 +39,8 @@ public final class StandardIO {
             Terminal.println(false, f_message.toString());
             return true;
         } catch (Exception e) {
-            Terminal.print(false, message);
-            Terminal.print(false, e.toString());
+            Terminal.print(message);
+            Terminal.print(e.toString());
             return false;
         }
     }
@@ -78,11 +78,11 @@ public final class StandardIO {
             if (message.charAt(message.length() - 1) == '\"')
                 message = message.substring(0, message.length() - 1);
 
-            Terminal.print(false, message);
+            Terminal.print(message);
             return true;
         } catch (Exception e) {
-            Terminal.print(false, message);
-            Terminal.print(false, e.toString());
+            Terminal.print(message);
+            Terminal.print(e.toString());
             return false;
         }
     }
@@ -94,15 +94,33 @@ public final class StandardIO {
         return new String(input);
     }
 
+    public static boolean println(String args) {
+        try {
+            args = args.replace("\"", "");
+            Terminal.println(false, args);
+            return true;
+        } catch (Exception e) {
+            Terminal.println(false, args);
+            Terminal.println(false, e.toString());
+            return false;
+        }
+    }
+
     public static boolean print(String args) {
         try {
             args = args.replace("\"", "");
-            Terminal.print(false, args);
+//            args = args.replace("\\n", "\n");
+            Terminal.print(args);
             return true;
         } catch (Exception e) {
-            Terminal.print(false, args);
-            Terminal.print(false, e.toString());
+            Terminal.print(args);
+            Terminal.print(e.toString());
             return false;
         }
+    }
+
+    private static String ConstructString(String arg) {
+
+        return "";
     }
 }

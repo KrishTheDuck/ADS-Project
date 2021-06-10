@@ -1,7 +1,6 @@
 package Console;
 
-import Kernel.Executor;
-import Kernel.Preprocessor;
+import RuntimeManager.RuntimePool;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,17 +53,18 @@ public class Terminal extends JFrame {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     String command = input.getText();
-                    print(true, command);
+                    println(true, command);
 
                     input.setText("");
 
                     buffer = command.getBytes();
                     nbis.updateBuffer(buffer);
-                    if (!isReading)
+                    if (!isReading) {
                         command = (parse(command.split(" ")));
-                    else
-                        command = "Input received returning";
-                    println(false, command);
+                        ConsoleReturnsMessage(command);
+                    } else {
+                        println(true, command);
+                    }
                 }
             }
         });
@@ -85,18 +85,22 @@ public class Terminal extends JFrame {
         isReading = false;
         return arr;
     }
+    //parse the entered commands
+    // '!' are the symbols indicating commands are present
 
     public static void println(boolean userPrints, String... s) {
         try {
-            if (buffer[buffer.length - 1] != '\n') {
+            if (buffer != null && buffer[buffer.length - 1] != '\n') {
+                nbos.write('\n');
+            } else if (buffer == null) {
                 nbos.write('\n');
             }
             if (userPrints)
                 for (String str : s)
-                    nbos.write(("$User: " + str + "\n").getBytes());
+                    nbos.write(("$User: " + str).getBytes());
             else
                 for (String str : s)
-                    nbos.write(("Console: " + str + "\n").getBytes());
+                    nbos.write(("Console: " + str).getBytes());
             nbos.write(10);
             nbos.flush();
         } catch (Exception e) {
@@ -104,16 +108,15 @@ public class Terminal extends JFrame {
             e.printStackTrace();
         }
     }
-    //parse the entered commands
-    // '!' are the symbols indicating commands are present
 
-    public static void print(boolean userPrints, String... message) {
+    public static void ConsoleReturnsMessage(String... message) {
+        for (String str : message) {
+            println(false, str);
+        }
+    }
+
+    public static void print(String... message) {
         try {
-            if (userPrints)
-                nbos.write("$User: ".getBytes());
-            else
-                nbos.write("Console: ".getBytes());
-
             for (String str : message)
                 nbos.write(str.getBytes());
             nbos.flush();
@@ -166,10 +169,6 @@ public class Terminal extends JFrame {
                 case "exit" -> exitAndReturn();
                 default -> "Error: \"" + cmd + "\" is an unsupported command"; //jic user thinks he's funny
             };
-        } else if (isReading) {
-            isReading = false;
-            notifyAll();
-            return "thank you for the input!";
         } else {
             return "Error: Operator \"" + operator + "\" is an unsupported operator";
         }
@@ -183,18 +182,18 @@ public class Terminal extends JFrame {
     private String execute(String path, boolean shouldReCompile) {
         //!run <file_path>
         File file = new File(path);
-        print(false, "Executing....");
+        ConsoleReturnsMessage("Executing....");
         if (file.exists()) {//if the file doesn't even exist don't bother
             try {
+                File output;
                 if (shouldReCompile) {
-                    Preprocessor c = new Preprocessor(file);
-                    File instruction_file = c.compile();
-                    Executor.InstructionLoader(instruction_file);
+                    output = RuntimePool.compile(file);
+                    RuntimePool.execute(output);
                 } else {
-                    Executor.InstructionLoader(file);
+                    RuntimePool.execute(file);
                 }
             } catch (Exception e) {
-                print(false, e.toString());
+                ConsoleReturnsMessage(e.toString());
             }
             return "Execution Finished."; //return executing so the parse command can return some string
         }

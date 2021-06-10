@@ -236,4 +236,11 @@ public class Node {
     public void delete(Node node) {
         this.children.remove(node);
     }
+
+    public int indexOf(Node checking) {
+        for (int i = 0; i < children.size(); i++) {
+            if (children.get(i).equals(checking)) return i;
+        }
+        return -1;
+    }
 }

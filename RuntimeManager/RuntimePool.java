@@ -1,4 +1,7 @@
-package Kernel.RuntimeManipulation;
+package RuntimeManager;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Controls pool of major runtime resources.
@@ -43,6 +46,29 @@ public class RuntimePool {
         return __RVM__.datatype(name);
     }
     //-------------------------------------------------------------
-    //END RVM CODE
+    //END OF RVM CODE
     //-------------------------------------------------------------
+
+    //-------------------------------------------------------------
+    //PREPROCESSOR CODE
+    //-------------------------------------------------------------
+
+    public static File compile(File file) throws IOException {
+        return Preprocessor.compile(file);
+    }
+    //-------------------------------------------------------------
+    //END OF PREPROCESSOR CODE
+    //-------------------------------------------------------------
+
+    //-------------------------------------------------------------
+    //EXECUTOR CODE
+    //-------------------------------------------------------------
+    public static void execute(File f) throws Exception {
+        Executor.execute(f);
+    }
+    //-------------------------------------------------------------
+    //END OF PREPROCESSOR CODE
+    //-------------------------------------------------------------
+
+
 }

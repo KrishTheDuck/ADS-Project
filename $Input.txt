@@ -5,6 +5,25 @@
 @ #[properties]
 int main(){
    stdio.print("Enter your age: ");
-   int i = stdio.readLine();
-   stdio.printf("Your age is $(i)");
+   int age = stdio.readLine();
+   stdio.printf("Your age is $(age)");
+
+    if(0 < age <= 12)
+    {
+        stdio.println("child");
+    }
+    else if(12 < age <= 19)
+    {
+        stdio.println("teen");
+    }
+        else if(20 < age < 30)
+    {
+        stdio.println("young adult");
+    }
+    else
+    {
+        stdio.println("older adult");
+    }
+
+   stdio.printf("\n\nNice\n\n");
 }

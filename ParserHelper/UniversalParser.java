@@ -61,14 +61,15 @@ public final class UniversalParser {
                 numbers.add(IntString.stoi(num));
             }
         }
-        //System.out.println("Numbers: " + numbers);
-        //System.out.println("Operators: " + operators);
+        System.out.println("Numbers: " + numbers);
+        System.out.println("Operators: " + operators);
 
         int[] map = Operators.order(operators);
         //System.out.println("Order operators w index: " + Arrays.toString(map));
 
         //order of operators
         //evaluate the numbers in order
+        boolean isFalse = false;
         for (int i = 0, mapLength = map.length; i < mapLength; i++) { //i keeps track of haw many operators have been calculated
             Integer num1 = numbers.get(map[i]);
             Integer num2 = numbers.get(map[i] + 1);
@@ -86,20 +87,71 @@ public final class UniversalParser {
                 case ">>" -> num1 >> num2;
                 case "<<" -> num1 << num2;
                 case ">>>" -> num1 >>> num2;
-                case "&&" -> ((num1 == 1) && (num2 == 1)) ? 1 : 0;
-                case "||" -> (num1 == 1) || (num2 == 1) ? 1 : 0;
-                case ">=" -> num1 >= num2 ? num1 : 0;
-                case "<=" -> num1 <= num2 ? num2 : 0;
-                case ">" -> num1 > num2 ? num1 : 0;
-                case "<" -> num1 < num2 ? num2 : 0;
-                case "==" -> num1.equals(num2) ? num1 : 0;
-                case "!=" -> !num1.equals(num2) ? num1 : 0;
+                case "&&" -> {
+                    if (num1 == 1 && num2 == 1 && !isFalse) { //if already found to be false don't bother
+                        yield 1;
+                    }
+                    isFalse = true;
+                    yield 0;
+                }
+                case "||" -> {
+                    if (num1 == 1 || num2 == 1 || !isFalse) { //just in case
+                        isFalse = false;
+                        yield 1;
+                    }
+                    isFalse = true;
+                    yield 0;
+                }
+                //if in case of a <bool> b < c and a <bool> b is found to be false don't evaluate
+                case ">=" -> {
+                    if (!isFalse) {
+                        if (num1 >= num2) yield num1;
+                    }
+                    isFalse = true;
+                    yield 0;
+                }
+                case "<=" -> {
+                    if (!isFalse) {
+                        if (num1 <= num2) yield num2;
+                    }
+                    isFalse = true;
+                    yield 0;
+                }
+                case ">" -> {
+                    if (!isFalse) {
+                        if (num1 > num2) yield num1;
+                    }
+                    isFalse = true;
+                    yield 0;
+                }
+                case "<" -> {
+                    if (!isFalse) {
+                        if (num1 < num2) yield num1;
+                    }
+                    isFalse = true;
+                    yield 0;
+                }
+                case "==" -> {
+                    if (!isFalse) {
+                        if (num1.equals(num2)) yield num1;
+                    }
+                    isFalse = true;
+                    yield 0;
+                }
+                case "!=" -> {
+                    if (!isFalse) {
+                        if (!num1.equals(num2)) yield num1;
+                    }
+                    isFalse = true;
+                    yield 0;
+                }
                 default -> throw new IllegalStateException("Unexpected value: " + op);
             };
 
-            //System.out.println("num1: " + num1);
-            //System.out.println("num2: " + num2);
-            //System.out.println("ans: " + ans);
+            System.out.println("num1: " + num1);
+            System.out.println("num2: " + num2);
+            System.out.println("ans: " + ans);
+            System.out.println("Is false: " + isFalse);
             //we have the answer but we need to remove the used up numbers and operator
             //but since the index order array will still point to a value after its removed we need to subtract 1 from
             //all the values above the index
@@ -116,10 +168,10 @@ public final class UniversalParser {
             }
 
             //System.out.println("i: " + i + " -> " + map[i]);
-            //System.out.println("Operators: " + operators);
-            //System.out.println("Numbers: " + numbers);
+            System.out.println("Operators: " + operators);
+            System.out.println("Numbers: " + numbers);
             //System.out.println("Map: " + Arrays.toString(map));
-            //System.out.println();
+            System.out.println();
         }
         return String.valueOf(numbers.remove(0));
     }
