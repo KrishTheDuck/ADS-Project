@@ -7,7 +7,6 @@ import java.util.List;
 public class OrderedPairList<K, V> extends PairCollection<K, V> {
     private final List<Pair<K, V>> STORED;
 
-
     /**
      * Constructor instantiating the backing ArrayList and adds the passed values as a pair.
      *
@@ -32,9 +31,9 @@ public class OrderedPairList<K, V> extends PairCollection<K, V> {
 
 
     /**
-     * Instantiates the backing ArrayList with some initial size.
+     * Instantiates the backing ArrayList with some initial length.
      *
-     * @param size Some initial size of the PairCollection.
+     * @param size Some initial length of the PairCollection.
      */
     public OrderedPairList(int size) {
         STORED = new ArrayList<>(size);
@@ -139,5 +138,4 @@ public class OrderedPairList<K, V> extends PairCollection<K, V> {
     public Pair<K, V> get(int index) {
         return STORED.get(index);
     }
-
 }

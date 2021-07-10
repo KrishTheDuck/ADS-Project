@@ -8,20 +8,17 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+
 
 public class Terminal extends JFrame {
     private static BufferedOutputStream nbos;
     private static JTextAreaInputStream nbis;
-    private static volatile boolean isReading = false;
+    private static boolean isReading = false;
     private static byte[] buffer;
     private JTextField input;
     private JTextArea output;
     private JPanel content;
-
     public Terminal() {
         super("Terminal");
         super.setContentPane(content);
@@ -85,8 +82,6 @@ public class Terminal extends JFrame {
         isReading = false;
         return arr;
     }
-    //parse the entered commands
-    // '!' are the symbols indicating commands are present
 
     public static void println(boolean userPrints, String... s) {
         try {
@@ -114,6 +109,8 @@ public class Terminal extends JFrame {
             println(false, str);
         }
     }
+    //parse the entered commands
+    // '!' are the symbols indicating commands are present
 
     public static void print(String... message) {
         try {
@@ -181,23 +178,20 @@ public class Terminal extends JFrame {
 
     private String execute(String path, boolean shouldReCompile) {
         //!run <file_path>
-        File file = new File(path);
         ConsoleReturnsMessage("Executing....");
-        if (file.exists()) {//if the file doesn't even exist don't bother
-            try {
-                File output;
-                if (shouldReCompile) {
-                    output = RuntimePool.compile(file);
-                    RuntimePool.execute(output);
-                } else {
-                    RuntimePool.execute(file);
-                }
-            } catch (Exception e) {
-                ConsoleReturnsMessage(e.toString());
+        try {
+            if (shouldReCompile) {
+                RandomAccessFile output;
+                output = RuntimePool.compile(new File(path));
+                RuntimePool.execute(output);
+            } else {
+                RandomAccessFile file = new RandomAccessFile(path, "r");
+                RuntimePool.execute(file);
             }
-            return "Execution Finished."; //return executing so the parse command can return some string
+        } catch (Exception e) {
+            ConsoleReturnsMessage(e.toString());
         }
-        return "file not found!";
+        return "Execution Finished."; //return executing so the parse command can return some string
     }
 
     private String print_commands() {

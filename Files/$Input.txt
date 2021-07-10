@@ -1,0 +1,13 @@
+# Test code for 6.14.2021
+# Testing reading and execution of conditional branches through AbstractSyntaxTree
+# note: floating points don't work. Even division results in int casting. Test accordingly.
+
+@
+int main(string[] args){
+    int age = 100;
+    if(1){
+        int age = 100;
+        stdio::printf("age = $age$");
+    }
+    age = 200;
+}

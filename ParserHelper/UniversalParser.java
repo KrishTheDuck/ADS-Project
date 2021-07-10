@@ -1,11 +1,18 @@
 package ParserHelper;
 
-import FunctionLibrary.QuickMath;
+import FunctionLibrary.FLMapper;
+import FunctionLibrary.Library.QuickMath;
+import Kernel.Datatypes.FloatString;
 import Kernel.Datatypes.IntString;
+import LanguageExceptions.FunctionNotFoundException;
+import LanguageExceptions.LibraryNotFoundException;
+import RuntimeManager.PreprocessorFlags;
+import RuntimeManager.RuntimePool;
+import RuntimeManager.SharedData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
+import java.util.Stack;
 
 /**
  * A utility class that parses an expression into a single value.
@@ -25,70 +32,155 @@ public final class UniversalParser {
         String line;
         while (!(line = earliest_expression(expression)).equals(expression)) {
             String ans = evaluate_token(line);
-            //System.out.println(line + " = " + ans);
+            ////System.out.println(line + " = " + ans);
             expression = expression.replace("(" + line + ")", ans);
-            //System.out.println("Expression: " + expression);
+            ////System.out.println("Expression: " + expression);
         }
         return evaluate_token(expression);
     }
 
+    public static void main(String[] args) {
+        //System.out.println("ans: " + s);
+    }
+
+    public static String function_evaluate(String expression) throws LibraryNotFoundException, FunctionNotFoundException {
+        String line;
+        while (!(line = innermost_function_call(expression)).equals(expression)) {
+            //System.out.println("line: " + line);
+            String[] broken = break_call(line);
+            expression = expression.replace(line, FLMapper.mapFunctionToExecution(broken[0], broken[1], broken[2]).toString());
+            //System.out.println("Expression: " + expression);
+        }
+        String[] broken = break_call(line);
+        return FLMapper.mapFunctionToExecution(broken[0], broken[1], broken[2]).toString(); //noteme floatstring is incorrectly converting string into float
+    }
+
+    public static String[] break_call(String expression) {
+        int i1 = expression.indexOf(PreprocessorFlags.call_delim);
+        int i2 = expression.indexOf("(");
+        String library = expression.substring(0, i1);
+        String function = expression.substring(i1 + PreprocessorFlags.call_delim.length(), i2);
+        String[] args = expression.substring(i2 + 1, expression.lastIndexOf(")")).split(PreprocessorFlags.pdelim);
+
+        for (int i = 0, argsLength = args.length; i < argsLength; i++) {
+            //System.out.println("\tArg: " + args[i]);
+            args[i] = evaluate(args[i]);
+        }
+        return new String[]{library, function, String.join(" ", args)};
+    }
+
+    private static String innermost_function_call(String expression) {
+        int index = expression.lastIndexOf(PreprocessorFlags.call_delim);
+        if (index == -1) return expression;
+
+        //library is between the latest occurrence of ' ', ',' , or '('
+        int begin = 0;
+        for (int i = index - 1; i >= 0; i--) { //todo implement earliest expression for functions
+            char c = expression.charAt(i);
+            if (c == ' ' || c == ',' || c == '(') {
+                begin = i + 1;
+                break;
+            }
+        }
+        int end = 0;
+        for (int i = index; i < expression.length(); i++) {
+            if (expression.charAt(i) == ')') {
+                end = i + 1;
+                break;
+            }
+        }
+        return expression.substring(begin, end);
+    }
+
+    public static String scopeIt(Stack<String> scopes) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : scopes) {
+            sb.append(s).append('.');
+        }
+        return sb.toString();
+    }
+
+    public static String ReplaceWithValue(String... tokens) {
+        //System.out.println("Tokens: " + Arrays.toString(tokens));
+        String scope = scopeIt(SharedData.current_scope);
+        for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
+            if (tokens[i].matches("[a-zA-Z]+[0-9]*")) {
+                tokens[i] = RuntimePool.value(scope + tokens[i]);
+            }
+        }
+        //System.out.println("Tokens: " + Arrays.toString(tokens));
+        return String.join(" ", tokens);
+    }
+
+
     //evaluates a singular expression token
     private static String evaluate_token(String line) {
-        //System.out.println("Input: \"" + line + "\"");
+        ////System.out.println("Input: \"" + line + "\"");
+        if (line.startsWith("\"") && line.endsWith("\"")) return line;
+        String[] st = line.split(" ");
+        if (st.length == 1) return line;
 
-        StringTokenizer st = new StringTokenizer(line, " ");
-        List<Integer> numbers = new ArrayList<>();
+        ReplaceWithValue(st);
+        //System.out.println(ReplaceWithValue(st));
+
+        List<Float> numbers = new ArrayList<>();
         List<String> operators = new ArrayList<>();
 
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken().strip();
-            String num = token.replaceAll("[^0-9]+", "");
-            String operator = token.replaceAll("[0-9]+", "");
-            if (num.equals("") || num.equals(" ")) {
-                operators.add(operator);
-            } else if (!" ".equals(operator) && !"".equals(operator)) {
-                int i;
+        //System.out.println("Token: " + Arrays.toString(st));
+        for (String string : st) {
+            string = string.strip();
+            if (FloatString.isFloat(string) || IntString.isInteger(string)) {
+                numbers.add(FloatString.stof(string));
+            } else {
+                String operator = string.replaceAll("[0-9]+?[.]", "");
+                if (operator.length() == string.length()) {
+                    operators.add(operator);
+                    continue;
+                }
+                String num = string.replace(operator, "");
+                float i;
                 switch (operator) {
                     case "!", "~" -> {
-                        i = IntString.stoi(num);
-                        i = (operator.equals("!")) ? (i == 0) ? 1 : 0 : ~i;
+                        i = FloatString.stof(num);
+                        i = (operator.equals("!")) ? (i == 0) ? 1 : 0 : ~(int) i;
                     }
-                    case "-" -> i = IntString.stoi(token);
+                    case "-" -> i = FloatString.stof(string);
+                    case "." -> {
+                        continue;
+                    }
                     default -> throw new IllegalStateException("Unexpected value: " + operator);
                 }
                 numbers.add(i);
-            } else {
-                numbers.add(IntString.stoi(num));
             }
         }
-        System.out.println("Numbers: " + numbers);
-        System.out.println("Operators: " + operators);
+        //System.out.println("Numbers: " + numbers);
+        //System.out.println("Operators: " + operators);
 
         int[] map = Operators.order(operators);
-        //System.out.println("Order operators w index: " + Arrays.toString(map));
+        ////System.out.println("Order operators w index: " + Arrays.toString(map));
 
         //order of operators
         //evaluate the numbers in order
         boolean isFalse = false;
         for (int i = 0, mapLength = map.length; i < mapLength; i++) { //i keeps track of haw many operators have been calculated
-            Integer num1 = numbers.get(map[i]);
-            Integer num2 = numbers.get(map[i] + 1);
+            float num1 = numbers.get(map[i]);
+            float num2 = numbers.get(map[i] + 1);
             String op = operators.get(map[i]);
-            int ans = switch (op) {
+            float ans = switch (op) {
                 case "*" -> num1 * num2;
                 case "/" -> num1 / num2;
                 case "%" -> num1 % num2;
                 case "+" -> num1 + num2;
                 case "-" -> num1 - num2;
-                case "**" -> QuickMath.POW(num1, num2);
-                case "&" -> num1 & num2;
-                case "|" -> num1 | num2;
-                case "^" -> num1 ^ num2;
-                case ">>" -> num1 >> num2;
-                case "<<" -> num1 << num2;
-                case ">>>" -> num1 >>> num2;
+                case "**" -> (float) QuickMath.POW(num1, (int) num2);
+                case "&" -> (int) num1 & (int) num2;
+                case "|" -> (int) num1 | (int) num2;
+                case "^" -> (int) num1 ^ (int) num2;
+                case ">>" -> (int) num1 >> (int) num2;
+                case "<<" -> (int) num1 << (int) num2;
+                case ">>>" -> (int) num1 >>> (int) num2;
                 case "&&" -> {
-                    if (num1 == 1 && num2 == 1 && !isFalse) { //if already found to be false don't bother
+                    if (!isFalse && num1 == 1 && num2 == 1) { //if already found to be false don't bother
                         yield 1;
                     }
                     isFalse = true;
@@ -102,45 +194,44 @@ public final class UniversalParser {
                     isFalse = true;
                     yield 0;
                 }
-                //if in case of a <bool> b < c and a <bool> b is found to be false don't evaluate
                 case ">=" -> {
-                    if (!isFalse) {
-                        if (num1 >= num2) yield num1;
+                    if (!isFalse && num1 >= num2) {
+                        yield num1;
                     }
                     isFalse = true;
                     yield 0;
                 }
                 case "<=" -> {
-                    if (!isFalse) {
-                        if (num1 <= num2) yield num2;
+                    if (!isFalse && num1 <= num2) {
+                        yield num2;
                     }
                     isFalse = true;
                     yield 0;
                 }
                 case ">" -> {
-                    if (!isFalse) {
-                        if (num1 > num2) yield num1;
+                    if (!isFalse && num1 > num2) {
+                        yield num1;
                     }
                     isFalse = true;
                     yield 0;
                 }
                 case "<" -> {
-                    if (!isFalse) {
-                        if (num1 < num2) yield num1;
+                    if (!isFalse && num1 < num2) {
+                        yield num2;
                     }
                     isFalse = true;
                     yield 0;
                 }
                 case "==" -> {
-                    if (!isFalse) {
-                        if (num1.equals(num2)) yield num1;
+                    if (!isFalse && num1 == num2) {
+                        yield num1;
                     }
                     isFalse = true;
                     yield 0;
                 }
                 case "!=" -> {
-                    if (!isFalse) {
-                        if (!num1.equals(num2)) yield num1;
+                    if (!isFalse && num1 != num2) {
+                        yield num1;
                     }
                     isFalse = true;
                     yield 0;
@@ -148,15 +239,15 @@ public final class UniversalParser {
                 default -> throw new IllegalStateException("Unexpected value: " + op);
             };
 
-            System.out.println("num1: " + num1);
-            System.out.println("num2: " + num2);
-            System.out.println("ans: " + ans);
-            System.out.println("Is false: " + isFalse);
+            //System.out.println("num1: " + num1);
+            //System.out.println("num2: " + num2);
+            //System.out.println("ans: " + ans);
+            //System.out.println("Is false: " + isFalse);
             //we have the answer but we need to remove the used up numbers and operator
             //but since the index order array will still point to a value after its removed we need to subtract 1 from
             //all the values above the index
 
-            //so first we replace
+            //so first we replace_RH
             numbers.set(map[i], ans);
             //get rid of the operator and next number
             numbers.remove(map[i] + 1);
@@ -167,13 +258,15 @@ public final class UniversalParser {
                 map[j] = (map[j] > map[i]) ? map[j] - 1 : map[j];
             }
 
-            //System.out.println("i: " + i + " -> " + map[i]);
-            System.out.println("Operators: " + operators);
-            System.out.println("Numbers: " + numbers);
-            //System.out.println("Map: " + Arrays.toString(map));
-            System.out.println();
+            ////System.out.println("i: " + i + " -> " + map[i]);
+            //System.out.println("Operators: " + operators);
+            //System.out.println("Numbers: " + numbers);
+            ////System.out.println("Map: " + Arrays.toString(map));
+            //System.out.println();
         }
-        return String.valueOf(numbers.remove(0));
+        float i = numbers.remove(0);
+        //System.out.println("Result: " + str);
+        return String.valueOf((i != 0.0) ? ((isFalse) ? 0 : i) : 0);
     }
 
     //gets the most-nested expression in the entire expression

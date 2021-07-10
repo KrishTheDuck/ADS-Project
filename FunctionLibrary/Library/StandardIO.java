@@ -1,14 +1,11 @@
-package FunctionLibrary;
+package FunctionLibrary.Library;
 
 import Console.Terminal;
+import FunctionLibrary.Native;
+import Kernel.Data_Structures.SortedPairList;
 import ParserHelper.UniversalParser;
-import RuntimeManager.RuntimePool;
 
 import java.util.Arrays;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Controls basic I/O functions.
@@ -16,7 +13,9 @@ import java.util.regex.Pattern;
  * @author Krish Sridhar, Kevin Wang
  * @see FunctionLibrary
  */
-public final class StandardIO {
+public final class StandardIO extends Native {
+    private static final int Serial = Native.GenerateHashCode(StandardIO.class);
+
     public static boolean printDelimited(String message) {
         try {
             String[] tokens = message.split(",");
@@ -32,8 +31,9 @@ public final class StandardIO {
             StringBuilder f_message = new StringBuilder();
 
             for (int i = 1, n = tokens.length; i < n; i++) {
-                f_message.append(UniversalParser.evaluate(ReplaceWithValue(tokens[i].split(" ")))).append(delimiter);
+                f_message.append(UniversalParser.evaluate(UniversalParser.ReplaceWithValue(tokens[i].split(" ")))).append(delimiter);
             }
+
             System.out.println("Delimiter: \"" + delimiter + "\"");
             System.out.println("Message: " + Arrays.toString(tokens));
             Terminal.println(false, f_message.toString());
@@ -45,44 +45,48 @@ public final class StandardIO {
         }
     }
 
-    public static String ReplaceWithValue(String... tokens) {
-        for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
-            if (tokens[i].matches("[a-zA-Z]+[0-9]*")) {
-                tokens[i] = RuntimePool.value(tokens[i]);
-            }
-        }
-        return String.join(" ", tokens);
-    }
-
     public static boolean printFormat(String message) {
         try {
-            String regex = "\\$\\([a-zA-Z]+[0-9]*\\)";
-
-            int len = 0;
-            for (char c : message.toCharArray()) {
-                len = (c == ',') ? ++len : len;
-            }
-
-            Map<String, String> toReplace = new TreeMap<>();
-            Matcher m = Pattern.compile(regex).matcher(message);
-            while (m.find()) {
-                String line = m.group();
-                toReplace.put(line, ReplaceWithValue(line.substring(2, line.length() - 1)));
-            }
-            for (Map.Entry<String, String> entry : toReplace.entrySet()) {
-                message = message.replace(entry.getKey(), entry.getValue());
-            }
-
             if (message.charAt(0) == '\"')
                 message = message.substring(1);
             if (message.charAt(message.length() - 1) == '\"')
                 message = message.substring(0, message.length() - 1);
 
-            Terminal.print(message);
+            StringBuilder rs = new StringBuilder(message);
+            System.out.println("Message: " + rs);
+
+            SortedPairList<String, String> jump_map = new SortedPairList<>();
+
+            for (int i = 0; i < message.length(); i++) {
+                if (rs.charAt(i) == '$') {
+                    int index = ++i;
+                    while (message.charAt(i) != '$') {
+                        i++;
+                    }
+
+                    String var = rs.substring(index, i);
+
+                    String line;
+                    if (jump_map.hasKey(var)) line = jump_map.getPairFromKey(var).value();
+                    else {
+                        line = UniversalParser.ReplaceWithValue(var);
+                        jump_map.add(var, line);
+                    }
+
+                    rs.replace(index - 1, i + 1, line);
+                    i += line.length();
+                }
+            }
+
+            jump_map.destroy();
+            System.out.println("Message: " + rs);
+
+            Terminal.print(rs.toString());
             return true;
         } catch (Exception e) {
             Terminal.print(message);
             Terminal.print(e.toString());
+            e.printStackTrace();
             return false;
         }
     }
@@ -109,7 +113,7 @@ public final class StandardIO {
     public static boolean print(String args) {
         try {
             args = args.replace("\"", "");
-//            args = args.replace("\\n", "\n");
+//            args = args.replace_RH("\\n", "\n");
             Terminal.print(args);
             return true;
         } catch (Exception e) {
@@ -122,5 +126,26 @@ public final class StandardIO {
     private static String ConstructString(String arg) {
 
         return "";
+    }
+
+    public static Object map(String function, String args) {
+        return switch (function) {
+            case "printf" -> StandardIO.printFormat(args);
+            case "printd" -> StandardIO.printDelimited(args);
+            case "print" -> StandardIO.print(args);
+            case "println" -> StandardIO.println(args);
+            case "readLine" -> StandardIO.readLine();
+            default -> throw new IllegalStateException("Function \"" + function + "\" does not exist in library StandardIO.");
+        };
+    }
+
+    @Override
+    public int getSerial() {
+        return Serial;
+    }
+
+    @Override
+    public int compareTo(Native o) {
+        return Serial - o.getSerial();
     }
 }

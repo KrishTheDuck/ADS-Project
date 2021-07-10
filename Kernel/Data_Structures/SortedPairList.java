@@ -2,7 +2,6 @@ package Kernel.Data_Structures;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * A PairCollection implementation that maintains sorted order through insertion.
@@ -18,8 +17,6 @@ import java.util.List;
  * Date: May 30, 2021
  */
 public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> extends PairCollection<K, V> {
-    private final List<Pair<K, V>> STORED; //backing arraylist.
-
     /**
      * Constructor instantiating the backing ArrayList and adds the passed values as a pair.
      *
@@ -43,9 +40,9 @@ public class SortedPairList<K extends Comparable<K>, V extends Comparable<V>> ex
     }
 
     /**
-     * Instantiates the backing ArrayList with some initial size.
+     * Instantiates the backing ArrayList with some initial length.
      *
-     * @param size Some initial size of the PairCollection.
+     * @param size Some initial length of the PairCollection.
      */
     public SortedPairList(int size) {
         STORED = new ArrayList<>(size);

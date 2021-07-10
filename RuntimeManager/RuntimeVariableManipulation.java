@@ -26,6 +26,10 @@ final class RuntimeVariableManipulation {
         return rvm.toString();
     }
 
+    public void delete(String var) {
+        rvm.remove(var);
+    }
+
     private Data returnByDatatype(String datatype, String value) {
         return switch (datatype) {
             case "int", "long", "short", "byte" -> new IntString(value);

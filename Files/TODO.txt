@@ -1,4 +1,5 @@
 TODO:
+    - Start strict defining of data
     - Bit-shifting for decimals
     - Structs
     - add more functions to lang through FLibMapper

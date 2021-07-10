@@ -2,6 +2,9 @@ package RuntimeManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Controls pool of major runtime resources.
@@ -14,6 +17,11 @@ import java.io.IOException;
  */
 public class RuntimePool {
     public static final RuntimeVariableManipulation __RVM__ = new RuntimeVariableManipulation();
+    private static final ExecutorService pool = Executors.newFixedThreadPool(5);
+
+    public static void dumpTaskLoad() {
+        System.out.println(pool);
+    }
 
     //-------------------------------------------------------------
     //RVM CODE
@@ -34,8 +42,12 @@ public class RuntimePool {
         return __RVM__.value(name);
     }
 
-    public static String setValue(String name, String value) {
-        return __RVM__.setValue(name, value.getBytes());
+    public static void delete(String var) {
+        __RVM__.delete(var);
+    }
+
+    public static void setValue(String name, String value) {
+        __RVM__.setValue(name, value.getBytes());
     }
 
     public static String setValue(String name, byte[] value) {
@@ -53,7 +65,7 @@ public class RuntimePool {
     //PREPROCESSOR CODE
     //-------------------------------------------------------------
 
-    public static File compile(File file) throws IOException {
+    public static RandomAccessFile compile(File file) throws IOException, NoSuchFieldException, IllegalAccessException {
         return Preprocessor.compile(file);
     }
     //-------------------------------------------------------------
@@ -63,12 +75,14 @@ public class RuntimePool {
     //-------------------------------------------------------------
     //EXECUTOR CODE
     //-------------------------------------------------------------
-    public static void execute(File f) throws Exception {
+    public static void execute(RandomAccessFile f) throws Exception {
         Executor.execute(f);
+    }
+
+    public static void exit() {
+        pool.shutdownNow();
     }
     //-------------------------------------------------------------
     //END OF PREPROCESSOR CODE
     //-------------------------------------------------------------
-
-
 }

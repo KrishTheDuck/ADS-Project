@@ -1,4 +1,9 @@
-package FunctionLibrary;
+package FunctionLibrary.Library;
+
+import FunctionLibrary.Native;
+import Kernel.Datatypes.FloatString;
+import Kernel.Datatypes.IntString;
+import LanguageExceptions.FunctionNotFoundException;
 
 /**
  * Basic mathematical function and operation library optimized for faster start-up times and higher consistency.
@@ -16,22 +21,17 @@ package FunctionLibrary;
  * @since 1.0
  */
 @SuppressWarnings("unused")
-public final class QuickMath {
+public final strictfp class QuickMath extends Native {
     public final static float PI = 3.1415926535f;
     public final static float E = 2.718281f;
     public final static float LN2 = 0.6931471806f;
     public final static float sqrt2 = 1.41421356237f;
     private final static int DEFAULT_ACCURACY = 10;
 
-    private QuickMath() {
-    }
-    //0.0002107 for bitwise
-    //0.0002218 for multiplying
-    //(~(i) % 2 + i % 2)
+    private static final int Serial = Native.GenerateHashCode(QuickMath.class);
 
-    public static void main(String[] args) {
+    public QuickMath() {
     }
-
 
     /**
      * Square root algorithm utilizing the Bakshali approximation.
@@ -50,6 +50,9 @@ public final class QuickMath {
         }
         return x0;
     }
+    //0.0002107 for bitwise
+    //0.0002218 for multiplying
+    //(~(i) % 2 + i % 2)
 
     /**
      * Binary search for the square root by first calculating initial approximations
@@ -143,9 +146,6 @@ public final class QuickMath {
         return (ABS((int) d) + ABS((int) (((int) d - d) * 100000)) / 100000d);
     }
 
-
-    //TODO fix exp so that approximation is better here
-
     /**
      * Calculates {@code base} to the power of {@code exponent}.
      *
@@ -166,21 +166,23 @@ public final class QuickMath {
     }
 
     public static int POW(int base, int exponent) {
-        int ans = base;
-        if (exponent == 0) return 1;
+        return (int) POW((float) base, exponent);
+    }
 
+    public static int MPOW(long base, int exponent, long mod) {
+        long ans = base % mod;
+        if (exponent == 0) return 1;
         --exponent;
         while (exponent > 0) {
-            ans += (base - 1) * (exponent & 1) * ans;
+            ans = (ans + ((base - 1) * (exponent & 1) * ans)) % mod;
             exponent >>= 1;
-            base *= base;
+            base = (base * base) % mod;
         }
-
-        return ans;
+        return (int) (ans % mod);
     }
-    //2 ^(111)
-    //2^1 + 2^2 + 2^3
-    //111
+
+
+    //TODO fix exp so that approximation is better here
 
     //GCF algorithm utilizing a quick Euclidean algorithm
     public static int GCF(int... ints) {
@@ -202,6 +204,9 @@ public final class QuickMath {
         }
         return a;
     }
+    //2 ^(111)
+    //2^1 + 2^2 + 2^3
+    //111
 
     /*
      * Bhaskara's Approximation:
@@ -245,5 +250,121 @@ public final class QuickMath {
     public static float exp(float x) {
 
         return 0;
+    }
+
+    public static Object map(String function_name, String args) throws FunctionNotFoundException {
+        return switch (function_name) {
+            case "bsqrt" -> {
+                float i = FloatString.stof(args.getBytes());
+                System.out.println("Parameter: " + i);
+                yield BAKSH_sqrt(FloatString.stof(args.getBytes()));
+            }
+            case "qsqrt" -> {
+                float i = FloatString.stof(args.getBytes());
+                System.out.println("Parameter: " + i);
+                yield Q_sqrt(FloatString.stof(args.getBytes()));
+            }
+            case "max" -> {
+                String[] args2 = args.split(" ");
+                yield max(IntString.stoi(args2[0]), IntString.stoi(args2[1]));
+            }
+            case "min" -> {
+                String[] args2 = args.split(" ");
+                yield min(IntString.stoi(args2[0]), IntString.stoi(args2[1]));
+            }
+            case "log" -> {
+                String[] args2 = args.split(" ");
+                yield log(FloatString.stof(args2[0]), FloatString.stof(args2[1]));
+            }
+            case "nlog" -> nlog(FloatString.stof(args.getBytes()));
+            case "ABS" -> {
+                if (args.contains("."))
+                    yield ABS(FloatString.stof(args));
+                else
+                    yield ABS(IntString.stoi(args));
+            }
+            case "GCF" -> {
+                String[] s = args.split(" ");
+                int[] i = new int[s.length];
+
+                for (int j = 0; j < i.length; j++) {
+                    i[j] = IntString.stoi(s[j]);
+                }
+                yield GCF(i);
+            }
+
+            default -> throw new FunctionNotFoundException("Function \"" + function_name + "\" does not exist in library StandardIO.");
+        };
+    }
+
+    //http://www.cs.cmu.edu/afs/cs/academic/class/15451-f14/www/lectures/lec6/karp-rabin-09-15-14.pdf
+    //https://ocw.mit.edu/courses/mathematics/18-783-elliptic-curves-spring-2019/lecture-notes/MIT18_783S19_lec12.pdf
+
+    //random prime generator
+    public static int random_prime() {
+        int length = 22;
+        int b = urgbs(length);
+        while (!miller_rabin(b)) {
+            b = urgbs(length);
+        }
+        return b;
+    }
+
+    public static int urgbs(int size) {
+        byte[] b = new byte[size];
+        for (int i = 0; i < size; i++) {
+            b[i] = (byte) (2 * Math.random());
+        }
+        return IntString.btoi(b);
+    }
+
+
+    public static void main(String[] args) {
+        System.out.println(random_prime());
+    }
+
+
+    public static boolean miller_rabin(int n) {
+        if (n == 2)
+            return true;
+        if (n % 2 == 0 || n <= 1)
+            return false;
+
+        // Find n = 2^d * r + 1
+        int d = n - 1;
+        while (d % 2 == 0)
+            d >>= 1;
+
+        accuracy:
+        for (int i = 0; i < DEFAULT_ACCURACY; i++) {
+            int a = 2 + (int) (Math.random() % (n - 4));
+            // a^d % n
+            int x = MPOW(a, d, n);
+            if (x == 1 || x == n - 1)
+                continue;
+
+            while (d != n - 1) {
+                x = MPOW(x, 2, n);
+                d <<= 1;
+
+                if (x == 1)
+                    return false;
+                if (x == n - 1)
+                    continue accuracy;
+            }
+            return false;
+        }
+        return true;
+    }
+
+
+    @Override
+    public int getSerial() {
+        return Serial;
+    }
+
+    @Override
+    public int compareTo(Native o) {
+        return Serial - o.getSerial();
     }
 }

@@ -1,38 +1,47 @@
 package FunctionLibrary;
 
+import FunctionLibrary.Library.QuickMath;
+import FunctionLibrary.Library.StandardIO;
 import LanguageExceptions.FunctionNotFoundException;
 import LanguageExceptions.LibraryNotFoundException;
+import RuntimeManager.RuntimePool;
 
-//NOTEME for void functions return true, else return the value (boxing is fine even though its expensive worry about optimizations later)
-//noteme because mfte doesnt care about what the params are supposed to look like functions should break it up themselves
+import java.util.Arrays;
+
+
 public final class FLMapper {
-    //TODO link the libraries to the specific functions
     public static Object mapFunctionToExecution(String library, String function_name, String args) throws LibraryNotFoundException, FunctionNotFoundException {
-        switch (library.toLowerCase()) {
-            case "stdio" -> {
-                switch (function_name) {
-                    case "printf" -> {
-                        return StandardIO.printFormat(args);
-                    }
-                    case "printd" -> {
-                        return StandardIO.printDelimited(args);
-                    }
-                    case "print" -> {
-                        return StandardIO.print(args);
-                    }
-                    case "println" -> {
-                        return StandardIO.println(args);
-                    }
-                    case "readLine" -> {
-                        return StandardIO.readLine();
-                    }
-                    default -> throw new IllegalStateException("Function does not exist in library \"" + library + "\": " + function_name);
+        return switch (library.toLowerCase()) {
+            case "stdio" -> StandardIO.map(function_name, args);
+            case "qmth" -> QuickMath.map(function_name, args);
+            case "sys" -> switch (function_name) {
+                case "print" -> {
+                    System.out.print("CONSOLE SAYS: " + args);
+                    yield true;
                 }
-            }
-            case "qmth" -> {
-                throw new LibraryNotFoundException("QMTH library not implemented");
-            }
+                case "println" -> {
+                    System.out.println("CONSOLE SAYS: " + args);
+                    yield true;
+                }
+                case "printf" -> {
+                    args = ReplaceWithValue(args);
+                    System.out.println(args);
+                    yield true;
+                }
+
+                default -> throw new IllegalStateException("Unexpected value: " + function_name);
+            };
             default -> throw new LibraryNotFoundException("Library is not supported: " + library.toLowerCase());
+        };
+    }
+
+    public static String ReplaceWithValue(String... tokens) {
+        for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
+            if (tokens[i].matches("[a-zA-Z]+[0-9]*")) {
+                tokens[i] = RuntimePool.value(tokens[i]);
+            }
         }
+        System.out.println("Tokens: " + Arrays.toString(tokens));
+        return String.join(" ", tokens);
     }
 }

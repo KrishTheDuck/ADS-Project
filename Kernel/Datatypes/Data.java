@@ -35,4 +35,6 @@ public abstract class Data implements Comparable<Data> {
     public int properties_length() {
         return length;
     }
+
+    public abstract String toString();
 }

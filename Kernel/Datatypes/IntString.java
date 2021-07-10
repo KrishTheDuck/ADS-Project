@@ -19,6 +19,13 @@ public final class IntString extends Data {
         return stoi(s.strip().getBytes());
     }
 
+    public static boolean isInteger(String s) {
+        for (char c : s.toCharArray()) {
+            if (c > 57 || c < 48) return false;
+        }
+        return true;
+    }
+
     public static int stoi(byte[] s) {
         byte negative = (byte) (s[0] == 45 ? -1 : 1);
         int start = negative == -1 ? 1 : 0;
@@ -29,6 +36,14 @@ public final class IntString extends Data {
             ans *= 10;
         }
         return negative * ans / 10;
+    }
+
+    public static int btoi(byte[] b) {
+        int sum = 0;
+        for (int i = 0, size = b.length; i < size; i++) {
+            sum += (b[i] & 1) << i;
+        }
+        return sum;
     }
 
     public String toString() {

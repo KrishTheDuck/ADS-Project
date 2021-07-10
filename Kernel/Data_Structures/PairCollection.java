@@ -1,6 +1,8 @@
 package Kernel.Data_Structures;
 
+import java.io.Serializable;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Abstract implementation of PairLists which are lists where each entry is specified by a Pair. Each pair contains a
@@ -13,13 +15,20 @@ import java.util.Iterator;
  * @since 1.0
  * Date: May 30, 2021
  */
-public abstract class PairCollection<K, V> implements Iterable<Pair<K, V>> {
+public abstract class PairCollection<K, V> implements Iterable<Pair<K, V>>, Serializable {
     /**
      * States the default initial capacity for all PairCollection implementations.
      *
      * @implNote Default initial capacity can be changed in accordance with what is necessary for the implementation.
      */
     protected static final byte INIT_CAPACITY = 10; //initial capacity
+
+    /**
+     * Backing List.
+     *
+     * @implNote See specific PairCollection for List dependency information.
+     */
+    protected List<Pair<K, V>> STORED; //backing arraylist.
 
     /**
      * Finds a Pair given the target value.
@@ -70,9 +79,9 @@ public abstract class PairCollection<K, V> implements Iterable<Pair<K, V>> {
 
 
     /**
-     * Returns size of the PairCollection.
+     * Returns length of the PairCollection.
      *
-     * @return integer signifying size.
+     * @return integer signifying length.
      */
     public abstract int size();
 
@@ -97,4 +106,8 @@ public abstract class PairCollection<K, V> implements Iterable<Pair<K, V>> {
      * @return Pair if found, null if not
      */
     public abstract Pair<K, V> get(int index);
+
+    public final void destroy() {
+        STORED = null;
+    }
 }

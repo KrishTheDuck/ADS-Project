@@ -1,31 +1,38 @@
 package RuntimeManager;
 
 import FunctionLibrary.FLMapper;
-import Kernel.Data_Structures.AbstractSyntaxTree;
-import Kernel.Data_Structures.Node;
+import Kernel.Data_Structures.Node.AbstractNode;
+import Kernel.Data_Structures.Node.CNode;
+import Kernel.Data_Structures.OrderedPairList;
+import LanguageExceptions.FailFastException;
 import LanguageExceptions.FunctionNotFoundException;
 import LanguageExceptions.LibraryNotFoundException;
 import ParserHelper.UniversalParser;
+import org.jetbrains.annotations.NotNull;
+import org.nustaq.serialization.FSTObjectInput;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.RandomAccessFile;
+import java.rmi.UnexpectedException;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * Executes instruction file.
  *
- * @author Krish Sridhar, Kevin Wang
+ * @author Krish Sridhar
  * @see Preprocessor
  * @since 1.0
  * Date: March 2021
  */
 
 final class Executor {
-    //todo implement set to method
-    public static void ExecutionEngine(String line) throws FunctionNotFoundException, LibraryNotFoundException {
-        String[] instructions = line.split(Preprocessor.tknzr);
+    private static OrderedPairList<String, AbstractNode> library;
+    private static int length;
+
+    public static void ExecutionEngine(String line) throws LibraryNotFoundException, FunctionNotFoundException {
+        String[] instructions = line.split(PreprocessorFlags.tknzr);
         System.out.println("Instruction: " + Arrays.toString(instructions));
         switch (instructions[0]) {
             case "mal" -> { //mal <properties> <name> <value> OR mal <properties> <name> call <library> <function_name> <args>
@@ -33,133 +40,150 @@ final class Executor {
                 String[] properties = instructions[1].split(" ");
                 String value;
                 if (instructions[3].equals("call")) {
-                    value = FLMapper.mapFunctionToExecution(instructions[4], instructions[5], (instructions.length == 7) ? instructions[6] : "").toString();
+                    value = UniversalParser.function_evaluate(instructions[4]);
+//                    value = FLMapper.mapFunctionToExecution(instructions[4], instructions[5], (instructions.length == 7) ? instructions[6] : "").toString();
                 } else {
-                    value = ReplaceWithValue(instructions[3].split(" "));
+                    value = UniversalParser.ReplaceWithValue(instructions[3].split(" "));
                 }
                 RuntimePool.commit(instructions[2], properties[properties.length - 1], UniversalParser.evaluate(value), properties);
             }
             case "set" -> {
-                instructions[2] = ReplaceWithValue(instructions[2].split(" "));
+                instructions[2] = UniversalParser.ReplaceWithValue(instructions[2].split(" "));
+                System.out.println(instructions[2]);
                 RuntimePool.setValue(instructions[1], UniversalParser.evaluate(instructions[2]));
             }
             //library, function name, args
             case "call" -> {
-                FLMapper.mapFunctionToExecution(instructions[1], instructions[2], instructions.length == 3 ? "" : instructions[3]);
+                int i = PreprocessorFlags.call_delim.length();
+
+                int count = 0;
+                int k = 0;
+                while (k < instructions[1].length() - i && count < 2) {
+                    String chars = instructions[1].substring(k, k + i);
+                    if (chars.equals(PreprocessorFlags.call_delim)) {
+                        ++count;
+                    }
+                    k += i;
+                }
+
+                if (count > 1) {
+                    UniversalParser.function_evaluate(instructions[1]);
+                    break;
+                }
+
+                String[] broken = UniversalParser.break_call(instructions[1]);
+                FLMapper.mapFunctionToExecution(broken[0], broken[1], broken[2]);
             }
+            case "del" -> RuntimePool.delete(instructions[1]);
         }
-        System.out.println(RuntimePool.__RVM__);
+        System.out.println("VM: " + RuntimePool.__RVM__);
     }
 
-    public static String ReplaceWithValue(String... tokens) {
-        for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
-            if (tokens[i].matches("[a-zA-Z]+[0-9]*")) {
-                System.out.println(tokens[i]);
-                tokens[i] = RuntimePool.value(tokens[i]);
-            }
+    public static void execute(RandomAccessFile f) throws Exception {
+        f.seek(0);
+        FSTObjectInput ois = new FSTObjectInput(new BufferedInputStream(new FileInputStream(f.getFD())));
+
+        long _start, _end;
+        _start = System.currentTimeMillis();
+        for (int i = 0; i < length; i++) {
+            AbstractNode ast = readObjectFromStream(ois);
+            library.add(ast.name(), ast);
         }
-        return String.join(" ", tokens);
+        _end = System.currentTimeMillis();
+
+        System.out.println("Load time: " + (_end - _start));
+
+        _start = System.currentTimeMillis();
+        search(library.getPairFromKey("int main [string[] args]").value());
+        _end = System.currentTimeMillis();
+        System.out.println("Execution time: " + (_end - _start));
     }
 
 
-    public static void execute(File inf_file) throws Exception {
-//        rvm = new RuntimeVariableManipulation();
-        BufferedReader br = new BufferedReader(new FileReader(inf_file));
-        AbstractSyntaxTree ast = new AbstractSyntaxTree("start", false);
+    private static @NotNull AbstractNode readObjectFromStream(FSTObjectInput inputStream) throws Exception {
+        Throwable error = null;
+        try {
+            int len = inputStream.readInt();
+            if (len != 0) {
+                byte[] buffer = new byte[len];
+                while (len > 0) {
+                    len -= inputStream.read(buffer, buffer.length - len, len);
+                }
+                return (AbstractNode) Preprocessor.fstc.getObjectInput(buffer).readObject(AbstractNode.class);
+            }
+        } catch (Exception e) {
+            error = e.getCause();
+        }
+        throw new UnexpectedException("Reading AST Object code has lead to unexpected error..." + error);
+    }
 
-        //create an execution path first before computing
-
-        //start from beginning of file
+    @SuppressWarnings("unused")
+    public static void search(AbstractNode current) throws FailFastException, LibraryNotFoundException, FunctionNotFoundException {
+        final AbstractNode head = current;
         String line;
-        while (!(line = br.readLine()).equals("EXIT")) {
-            line = line.strip(); //clear tabs
-            System.out.println("Considering: " + line);
-            //if encounter "entr" create a node
-            if (line.startsWith("entr")) {
-                String[] tokens = line.split(Preprocessor.tknzr);
-                System.out.println("\tEntering: " + tokens[1]);
-                //load the instruction as the first line of code.
-                switch (tokens[1]) {
-                    case "if", "elif" -> {
-                        System.out.println("\tConditional: " + tokens[2]);
-                        ast.add_and_enter(tokens[1], true); //add scope name
-                        ast.set_condition(tokens[2]); //set first condition to this
-                    }
-                    case "else" -> {
-                        System.out.println("\tConditional: else");
-                        ast.add_and_enter(tokens[1], true); //add scope name
-                        ast.set_condition("1");
-                    }
-                    default -> ast.add_and_enter(tokens[1], false); //not a condition just a custom scope
-                }
-                //if encounter "end" return to parent
-            } else if (line.startsWith("end")) { //ending a scope
-                String token = line.substring(3 + Preprocessor.tknzr.length() - 1);
-                System.out.println("\tEnding scope: " + ast.current());
-                ast.load("end");
-                ast.move_back();
-                ast.load("chk " + token); //says to search for the next token and check for execution
-            } else {
-                System.out.println("\tLoading instruction: " + line);
-                ast.load(line);
-            }
-        }
-
-        System.out.println("\nStarting execution...\n");
-        //time for recursive search
-        //first i return to the first node
-        ast.head();
-        //!!!GOTTA PUSH THE EXIT CALL!!!
-        ast.load("EXIT");
-        System.out.println("Main code: " + ast.code());
-        //checking each child:
-        Node current = ast.current();
-        final Node head = current;
-        while (current != null && !(line = current.pop()).equals("EXIT")) { //keep iterating
-            System.out.println("CODE LEFT: " + current.code()); //todo tokens and code left is not synced
-
-            String[] tokens = line.split(Preprocessor.tknzr);
-            System.out.println("\tTOKENS: " + Arrays.toString(tokens));
-            if (tokens[0].equals("chk")) { //chk child
-                if ("if".equals(tokens[1]) || "elif".equals(tokens[1])) { //conditional
-                    Node checking = current.find(tokens[1]);
-                    System.out.println("Checking condition: " + checking.condition());
-                    boolean enter = !UniversalParser.evaluate(ReplaceWithValue(checking.condition().split(" "))).equals("0");
-                    System.out.println(enter + " should enter: " + checking);
-                    if (enter) { //if true enter and !!!DELETE ALL CONSECUTIVE ELIF ELSE CHILDREN!!!
-                        List<Node> children = current.children();
-                        System.out.println("Start from index: " + current.indexOf(checking) + 1);
-                        for (int i = current.indexOf(checking) + 1, childrenSize = children.size(); i < childrenSize; i++) {
-                            Node child = children.get(i);
-                            if (child.name().equals("elif")) {
-                                System.out.println("Deleting: " + child + " -> " + child.code());
-                                current.delete(child);
-                                head.pop();
-                                continue;
-                            } else if (child.name().equals("else")) {
-                                System.out.println("Final delete: " + child + " -> " + child.code());
-                                current.delete(child);
-                                break;
-                            }
-                            break;
+        System.out.println(current.code());
+        SharedData.current_scope.push(head.serial());
+        while (current != null && !(line = current.pop()).equals(PreprocessorFlags.EXIT)) { //keep iterating
+//            System.out.println("CODE LEFT: " + current.code() + " current: " + line);
+            String[] tokens = line.split(PreprocessorFlags.tknzr);
+            switch (tokens[0]) {
+                case "chk" -> {  //chk child
+                    SharedData.current_scope.push(tokens[1]);
+                    if ("if".equals(tokens[1]) || "elif".equals(tokens[1])) { //conditional
+                        AbstractNode checking = current.find_first(tokens[1]);
+                        if (checking == null) throw new FailFastException();
+                        boolean enter = !UniversalParser.evaluate(UniversalParser.ReplaceWithValue(((CNode) checking).condition().split(" "))).equals("0.0");
+                        if (enter) { //if true enter and !!!DELETE ALL CONSECUTIVE ELIF ELSE CHILDREN!!!
+                            cascade_deletion(current, checking, head);
+                            current = checking;
+                        } else { //if false remove.
+                            current.remove(checking);
                         }
-                        current = checking;
-                    } else { //if false remove.
-                        current.delete(checking);
+                    } else { //enter always
+                        current = current.find_first(tokens[1]); //child AbstractNode;
                     }
                 }
-                //noteme because we delete all chains on "true" if we find an "else" block we have to execute it
-                else { //enter always
-                    current = current.find(tokens[1]); //child node;
+                case "end" -> {//exit script
+                    SharedData.current_scope.pop();
+                    AbstractNode save = current;
+                    current = current.parent();
+                    current.remove(save);
                 }
-            } else if ("end".equals(tokens[0])) { //exit script
-                //delete node
-                Node save = current;
-                current = current.parent();
-                current.delete(save);
-            } else {
-                ExecutionEngine(line);
+                //delete AbstractNode
+                default -> {
+                    long start, end;
+                    start = System.currentTimeMillis();
+                    ExecutionEngine(line);
+                    end = System.currentTimeMillis();
+                    System.out.println("\tTime: " + (end - start));
+                }
             }
         }
+
+    }
+
+    private static void cascade_deletion(AbstractNode current, AbstractNode checking, AbstractNode
+            head) {
+        System.out.println("\tDELETING:");
+        List<AbstractNode> children = current.children();
+        for (int i = current.indexOf(checking) + 1; i < children.size(); i++) {
+            AbstractNode child = children.get(i);
+            if (child.name().equals("elif")) {
+                System.out.println("Deleting: " + child + " -> " + child.code());
+                current.remove(child);
+                head.pop();
+                continue;
+            } else if (child.name().equals("else")) {
+                System.out.println("Final delete: " + child + " -> " + child.code());
+                current.remove(child);
+                break;
+            }
+            break;
+        }
+    }
+
+    public static void setLibrarySize(int size) {
+        length = size;
+        library = new OrderedPairList<>(length);
     }
 }
