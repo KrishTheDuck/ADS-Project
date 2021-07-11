@@ -105,6 +105,7 @@ public final class UniversalParser {
         String scope = scopeIt(SharedData.current_scope);
         for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
             if (tokens[i].matches("[a-zA-Z]+[0-9]*")) {
+                System.out.println("Finding valueof: " + (scope + tokens[i]));
                 tokens[i] = RuntimePool.value(scope + tokens[i]);
             }
         }

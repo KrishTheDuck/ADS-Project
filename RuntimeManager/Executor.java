@@ -90,11 +90,10 @@ final class Executor {
             library.add(ast.name(), ast);
         }
         _end = System.currentTimeMillis();
-
         System.out.println("Load time: " + (_end - _start));
 
         _start = System.currentTimeMillis();
-        search(library.getPairFromKey("int main [string[] args]").value());
+        search(library.getPairFromKey("10511011632109").value());
         _end = System.currentTimeMillis();
         System.out.println("Execution time: " + (_end - _start));
     }

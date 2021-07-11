@@ -19,7 +19,6 @@ import java.util.*;
  * @since 1.0
  * <p>Date: February 24, 2021
  */
-@SuppressWarnings("unused")
 final class Preprocessor {
     public static final FSTConfiguration fstc = FSTConfiguration.createDefaultConfiguration();
 
@@ -41,36 +40,10 @@ final class Preprocessor {
         return sb.toString();
     }
 
-    //extends an array given varargs.
-    private static String[] extend(String[] arr, String... vars) {
-        String[] n_arr = new String[arr.length + vars.length];
-
-        if (n_arr.length - arr.length >= 0) {
-            System.arraycopy(arr, 0, n_arr, 0, arr.length);
-            System.arraycopy(vars, 0, n_arr, arr.length, n_arr.length - arr.length);
-        }
-        return n_arr;
-    }
-
-    //converts the source codes methods into a list of lists which contains only the most pertinent information
-    //about a method such as the method body, parameters, name, and return signature.
-    private static void register_components(Queue<ArrayList<String>> methods, StringBuilder file) {
-        StringTokenizer method_tokenizer = new StringTokenizer(file.toString(), PreprocessorFlags.mdelim); //Tokenize by method delimiter
-        while (method_tokenizer.hasMoreTokens()) { //for every method
-            String method, return_type, method_name, method_body; //important information
-            String[] params;
-            method = method_tokenizer.nextToken().strip(); // get the entire method
-            return_type = method.substring(0, method.indexOf(" ")).strip(); // get the return type (first token)
-            method_name = method.substring(method.indexOf(" "), method.indexOf("(")).strip(); //get the name (second token)
-            method_body = method.substring(method.indexOf("{") + 1, method.lastIndexOf("}")); //get method body from first to last curly bracket
-            params = method.substring(method.indexOf("(") + 1, method.indexOf(")")).split(PreprocessorFlags.pdelim); //get the parameters and split by parameter delimiter
-            methods.add(new ArrayList<>(Arrays.asList(method_name, Arrays.toString(params), return_type, method_body))); //stores method info into the list
-        }
-    }
-
-
     //streams the source code into each instruction
     private static void stream(String method_body, FSTObjectOutput out, String function_name) throws IOException {
+        function_name = AbstractNode.serialize(function_name);
+        System.out.println("functionName: " + function_name);
         AbstractNodeUtils ast = new AbstractNodeUtils(function_name);
 
         StringBuilder acc = new StringBuilder();
@@ -78,7 +51,7 @@ final class Preprocessor {
         Stack<String> scopes = new Stack<>(); //keeps track of entering scopes
         Stack<String> vars = new Stack<>();
 
-        scopes.add(ast.head().serial());
+        scopes.add(function_name);
 
         String p = "";
 
@@ -177,6 +150,7 @@ final class Preprocessor {
         //load exit flag
         ast.load(PreprocessorFlags.EXIT);
         ast.print();
+        System.out.println();
 
         writeObjectToStream(out, ast.head());
         out.flush();
@@ -187,9 +161,7 @@ final class Preprocessor {
         outputStream.writeInt(b.length);
         outputStream.write(b, 0, b.length);
         outputStream.flush();
-        System.out.println();
     }
-
 
     private static String ReplaceWithMallocScript(StringBuilder instruction, Stack<String> scopes, Stack<String> vars) {
         instruction = (instruction.charAt(0) == ' ') ? new StringBuilder(instruction.substring(1)) : instruction;
@@ -216,29 +188,27 @@ final class Preprocessor {
         RandomAccessFile inf_file = new RandomAccessFile("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\Files\\$instruction.txt", "rwd");
         inf_file.seek(0);
         FSTObjectOutput out = new FSTObjectOutput(new BufferedOutputStream(new FileOutputStream(inf_file.getFD())), fstc);
-//        ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(inf_file.getFD())));
         StringBuilder file = new StringBuilder(); //store in a string
 
 
         _start = System.currentTimeMillis();
         total:
         {
+            Stack<List<String>> methods = new Stack<>(); //stores most important parts of method (return type, method name, parameters, method body)
             normalize:
             {
-                normalize(file, src_code); //get rid of random bits of data that are insignificant
+                methods = normalize(src_code); //get rid of random bits of data that are insignificant
             }
-            Queue<ArrayList<String>> methods = new LinkedList<>(); //stores most important parts of method (return type, method name, parameters, method body)
             register:
             {
-                register_components(methods, file); //store the components of the "file"  in the "methods" list
                 Executor.setLibrarySize(methods.size());
                 System.out.println("Method count: " + methods.size() + "\n");
             }
             stream:
             {
                 while (methods.size() > 0) {
-                    List<String> m = methods.remove();
-                    stream(m.get(3), out, m.get(2) + " " + m.get(0) + " " + String.join(" ", m.get(1)));
+                    List<String> m = methods.pop();
+                    stream(m.get(1), out, m.get(0));
                 }
             }
         }
@@ -248,25 +218,57 @@ final class Preprocessor {
     }
 
     //normalizes source code file by removing extra spaces and comments then storing everything into a StringBuilder object
-    private static void normalize(StringBuilder file, File src_code) throws IOException {
+    private static Stack<List<String>> normalize(File src_code) throws IOException {
         BufferedInputStream bis = new BufferedInputStream(new FileInputStream(src_code));//read in file and store
-        char prev_char = (char) bis.read();
-        char c;
-        while ((c = (char) bis.read()) != '\uFFFF') { //continue until EOF
-            if (prev_char == PreprocessorFlags.comment_marker) { //remove comment marker
-                do {
-                    prev_char = (char) bis.read();
-                } while (prev_char != '\n');
-                continue;
-            }
+        Stack<List<String>> methods = new Stack<>();
 
-            if (c != '\n' && c != '\r' && c != '\t' && c != '#') { //remove extras
+        char c;
+        while ((c = (char) bis.read()) != '\uFFFF') {
+            switch (c) {
+                case PreprocessorFlags.comment_marker -> {
+                    do {
+                        c = (char) bis.read();
+                    } while (c != '\n' && c != PreprocessorFlags.comment_marker);
+                }
+                case PreprocessorFlags.mdelim -> {
+                    methods.add(new ArrayList<>(2));
+
+                    StringBuilder container = new StringBuilder();
+                    while ((c = getOrIgnore(bis, c)) != '{') {
+                        container.append(c);
+                    }
+                    methods.peek().add(container.toString());
+                    container.delete(0, container.length());
+
+                    int counter = 1;
+
+                    while ((c = getOrIgnore(bis, c)) != '\uFFFF') {
+                        if (c == '{') {
+                            ++counter;
+                        } else if (c == '}') {
+                            --counter;
+                            if (counter == 0) break;
+                        }
+                        container.append(c);
+                    }
+                    methods.peek().add(container.toString());
+                    System.out.println(methods);
+                    System.out.println();
+                }
+            }
+        }
+        return methods;
+    }
+
+    private static char getOrIgnore(BufferedInputStream bis, char prev_char) throws IOException {
+        char c;
+        while ((c = (char) bis.read()) != '\uFFFF') {
+            if (c != '\t' && c != '\r' && c != '\n' && c != PreprocessorFlags.comment_marker) {
                 if (prev_char == ' ' && c == ' ')
                     continue;
-                file.append(c);
+                return c;
             }
-            prev_char = c;
         }
-        bis.close();
+        return c;
     }
 }

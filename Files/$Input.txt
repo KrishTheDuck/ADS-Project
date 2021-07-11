@@ -7,7 +7,11 @@ int main(string[] args){
     int age = 100;
     if(1){
         int age = 100;
-        stdio::printf("age = $age$");
     }
-    age = 200;
+    age = self::test();
+}
+
+@
+int test(){
+    return -1;
 }

@@ -41,6 +41,15 @@ public abstract class AbstractNode implements Serializable {
         this.serial = serial1;
     }
 
+    public static String serialize(String name) {
+        StringBuilder sb = new StringBuilder();
+        byte[] bytes = name.getBytes();
+        for (int i = 0, bytesLength = bytes.length; i < (bytesLength >> 2); i++) {
+            sb.append(bytes[i] & 0XFF + 0x100);
+        }
+        return sb.toString();
+    }
+
     public final List<AbstractNode> children() {
         return this.children;
     }
@@ -72,7 +81,6 @@ public abstract class AbstractNode implements Serializable {
     public final String pop() {
         return this.code.remove();
     }
-
 
     public final Queue<String> code() {
         return this.code;
