@@ -1,3 +1,3 @@
-# EOY_ADS_PROJECT
+# A Programming Langauge
 
-End of year Advanced Data Structure Project
+A high-level, function-oriented, strongly typed, semi-compiled language.
