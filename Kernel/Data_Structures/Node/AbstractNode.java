@@ -17,8 +17,9 @@ import java.util.Queue;
  * Date: 6/13/2021
  *
  * @author Krish Sridhar
+ * @see AbstractNodeUtils
  */
-@Predict({INode.class, CNode.class})
+@Predict({INode.class, CNode.class, FNode.class})
 public abstract class AbstractNode implements Serializable {
     @Serial
     private static final long serialVersionUID = -2134534234124L;

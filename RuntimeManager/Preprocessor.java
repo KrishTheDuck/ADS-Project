@@ -1,15 +1,14 @@
 package RuntimeManager;
 
-import Kernel.Data_Structures.AbstractNodeUtils;
-import Kernel.Data_Structures.Node.AbstractNode;
-import Kernel.Data_Structures.Node.CNode;
-import Kernel.Data_Structures.Node.INode;
+import Kernel.Data_Structures.Node.*;
+import Kernel.Data_Structures.Pair;
 import ParserHelper.UniversalParser;
 import org.nustaq.serialization.FSTConfiguration;
 import org.nustaq.serialization.FSTObjectOutput;
 
 import java.io.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Stack;
 
 /**
  * Takes in a file path, compiles instructions, creates a variable control JSON file, creates a instruction file preserving order of insertion.
@@ -41,21 +40,23 @@ final class Preprocessor {
     }
 
     //streams the source code into each instruction
-    private static void stream(String method_body, FSTObjectOutput out, String function_name) throws IOException {
-        function_name = AbstractNode.serialize(function_name);
-        System.out.println("functionName: " + function_name);
-        AbstractNodeUtils ast = new AbstractNodeUtils(function_name);
+    private static void stream(FSTObjectOutput out, Pair<FNode, StringBuilder> function) throws IOException {
+        String serialized_function_name = AbstractNode.serialize(function.key().name());
+        boolean entry = Arrays.asList(function.key().properties()).contains("ENTRY");
+        if (entry) SharedData.MAIN_CODE = serialized_function_name;
+        System.out.println("functionName: " + serialized_function_name);
+        AbstractNodeUtils ast = new AbstractNodeUtils(function.key());
 
         StringBuilder acc = new StringBuilder();
 
         Stack<String> scopes = new Stack<>(); //keeps track of entering scopes
         Stack<String> vars = new Stack<>();
 
-        scopes.add(function_name);
+        scopes.add(serialized_function_name);
 
         String p = "";
 
-        char[] charArray = method_body.toCharArray();
+        char[] charArray = function.value().toString().toCharArray();
         for (char i : charArray) {
             switch (i) {
                 case ';' -> {
@@ -185,7 +186,7 @@ final class Preprocessor {
     public static RandomAccessFile compile(File src_code) throws IOException, NoSuchFieldException, IllegalAccessException {
         final long _start, _end;
 
-        RandomAccessFile inf_file = new RandomAccessFile("C:\\Users\\srikr\\Desktop\\adsproject\\ADS-Project\\Files\\$instruction.txt", "rwd");
+        RandomAccessFile inf_file = new RandomAccessFile("C:\\Users\\srikr\\Documents\\GitHub\\ADS-Project\\Files\\$instruction.txt", "rwd");
         inf_file.seek(0);
         FSTObjectOutput out = new FSTObjectOutput(new BufferedOutputStream(new FileOutputStream(inf_file.getFD())), fstc);
         StringBuilder file = new StringBuilder(); //store in a string
@@ -194,10 +195,11 @@ final class Preprocessor {
         _start = System.currentTimeMillis();
         total:
         {
-            Stack<List<String>> methods = new Stack<>(); //stores most important parts of method (return type, method name, parameters, method body)
+            Stack<Pair<FNode, StringBuilder>> methods = new Stack<>(); //stores most important parts of method (return type, method name, parameters, method body)
             normalize:
             {
                 methods = normalize(src_code); //get rid of random bits of data that are insignificant
+                System.out.println(methods);
             }
             register:
             {
@@ -207,8 +209,8 @@ final class Preprocessor {
             stream:
             {
                 while (methods.size() > 0) {
-                    List<String> m = methods.pop();
-                    stream(m.get(1), out, m.get(0));
+                    Pair<FNode, StringBuilder> m = methods.pop();
+                    stream(out, m);
                 }
             }
         }
@@ -218,9 +220,9 @@ final class Preprocessor {
     }
 
     //normalizes source code file by removing extra spaces and comments then storing everything into a StringBuilder object
-    private static Stack<List<String>> normalize(File src_code) throws IOException {
+    private static Stack<Pair<FNode, StringBuilder>> normalize(File src_code) throws IOException {
         BufferedInputStream bis = new BufferedInputStream(new FileInputStream(src_code));//read in file and store
-        Stack<List<String>> methods = new Stack<>();
+        Stack<Pair<FNode, StringBuilder>> methods = new Stack<>();
 
         char c;
         while ((c = (char) bis.read()) != '\uFFFF') {
@@ -231,13 +233,24 @@ final class Preprocessor {
                     } while (c != '\n' && c != PreprocessorFlags.comment_marker);
                 }
                 case PreprocessorFlags.mdelim -> {
-                    methods.add(new ArrayList<>(2));
-
                     StringBuilder container = new StringBuilder();
+
+                    //contains properties, return type, function name, params
                     while ((c = getOrIgnore(bis, c)) != '{') {
                         container.append(c);
                     }
-                    methods.peek().add(container.toString());
+
+                    String[] properties = container.substring(1, container.indexOf("]")).split(",");
+                    System.out.println("Properties: " + Arrays.toString(properties));
+                    //find property in properties
+                    String return_type = container.substring(container.indexOf("]") + 1, container.indexOf(" "));
+                    System.out.println("Return type: " + return_type);
+                    String function_name = container.substring(container.indexOf(return_type) + return_type.length() + 1, container.indexOf("("));
+                    System.out.println("Function name: " + function_name);
+                    String[] params = container.substring(container.indexOf(function_name) + function_name.length() + 1, container.indexOf(")")).split(",");
+                    System.out.println("Parameters: " + Arrays.toString(params));
+
+                    FNode function = new FNode(function_name, properties, params, return_type);
                     container.delete(0, container.length());
 
                     int counter = 1;
@@ -251,9 +264,8 @@ final class Preprocessor {
                         }
                         container.append(c);
                     }
-                    methods.peek().add(container.toString());
-                    System.out.println(methods);
-                    System.out.println();
+                    Pair<FNode, StringBuilder> pair = new Pair<>(function, container);
+                    methods.add(pair);
                 }
             }
         }

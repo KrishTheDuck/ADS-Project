@@ -1,4 +1,4 @@
-package Kernel.Data_Structures;
+package Kernel.Data_Structures.Node;
 
 import Kernel.Data_Structures.Node.AbstractNode;
 import Kernel.Data_Structures.Node.CNode;
@@ -10,12 +10,12 @@ import java.util.Queue;
 public class AbstractNodeUtils {
     private AbstractNode head;
 
-    public AbstractNodeUtils(String head) {
-        this.head = new INode(head, null);
+    public AbstractNodeUtils(String name, String[] parameters, String[] properties, String return_type) {
+        this.head = new FNode(name, parameters, properties, return_type);
     }
 
-    public AbstractNodeUtils(AbstractNode node) {
-        this.head = node;
+    public AbstractNodeUtils(FNode head) {
+        this.head = head;
     }
 
     public Queue<String> code() {

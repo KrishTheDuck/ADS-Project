@@ -2,7 +2,20 @@ package Kernel.Data_Structures.Node;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 
+/**
+ * Object wrapper for a AbstractNode  in the Abstract Syntax Tree. Contains an name header, which can state the executing
+ * condition or scope name, a Queue of code, a list of children, and a reference back to the parent AbstractNode .
+ *
+ * @author Krish Sridhar
+ * Date: May 30, 2021
+ * @see Queue
+ * @see AbstractNodeUtils
+ * @see List
+ * @since 1.0
+ */
 public final class CNode extends AbstractNode {
     @Serial
     private static final long serialVersionUID = 213491234232L;
