@@ -1,4 +1,4 @@
-package RuntimeManager;
+package Kernel.RuntimeManager;
 
 import Kernel.Data_Structures.Node.*;
 import Kernel.Data_Structures.Pair;
@@ -10,41 +10,17 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.Stack;
 
-/**
- * Takes in a file path, compiles instructions, creates a variable control JSON file, creates a instruction file preserving order of insertion.
- *
- * @author Krish Sridhar
- * @see <a href=https://github.com/RuedigerMoeller/fast-serialization>Fast Serialization</a>
- * @since 1.0
- * <p>Date: February 24, 2021
- */
-final class Preprocessor {
+public final class Compiler {
     public static final FSTConfiguration fstc = FSTConfiguration.createDefaultConfiguration();
 
     static {
         fstc.registerClass(AbstractNode.class, INode.class, CNode.class);
     }
 
-    //you cant use me if you don't give me a file.
-    private Preprocessor() {
-    }
-
-    //converts an array of type T to a string that can be appended to the file
-    //it uses the compilation tokenizer so that reading from the file can be simple.
-    private static <T> String ARR_TO_STR(T[] arr) {
-        StringBuilder sb = new StringBuilder();
-        for (T element : arr) {
-            sb.append(element.toString()).append(PreprocessorFlags.tknzr);
-        }
-        return sb.toString();
-    }
-
     //streams the source code into each instruction
     private static void stream(FSTObjectOutput out, Pair<FNode, StringBuilder> function) throws IOException {
-        String serialized_function_name = AbstractNode.serialize(function.key().name());
         boolean entry = Arrays.asList(function.key().properties()).contains("ENTRY");
-        if (entry) SharedData.MAIN_CODE = serialized_function_name;
-        System.out.println("functionName: " + serialized_function_name);
+        if (entry) SharedData.MAIN_CODE = function.key().serial();
         AbstractNodeUtils ast = new AbstractNodeUtils(function.key());
 
         StringBuilder acc = new StringBuilder();
@@ -52,7 +28,7 @@ final class Preprocessor {
         Stack<String> scopes = new Stack<>(); //keeps track of entering scopes
         Stack<String> vars = new Stack<>();
 
-        scopes.add(serialized_function_name);
+        scopes.add(function.key().serial());
 
         String p = "";
 
@@ -164,6 +140,25 @@ final class Preprocessor {
         outputStream.flush();
     }
 
+    /**
+     * Compiles the source code into language and syntax that the executor can more easily understand.
+     *
+     * @return Instruction File.
+     * @throws IOException When instruction file cannot be created.
+     */
+    @SuppressWarnings("all")
+    public static RandomAccessFile compile(File src_code) throws IOException, NoSuchFieldException, IllegalAccessException {
+        RandomAccessFile inf_file = new RandomAccessFile("C:\\Users\\srikr\\Documents\\GitHub\\ADS-Project\\Files\\$instruction.txt", "rwd");
+        FSTObjectOutput out = new FSTObjectOutput(new BufferedOutputStream(new FileOutputStream(inf_file.getFD())), fstc);
+
+        for (Pair<FNode, StringBuilder> p : Preprocessor.preprocess(src_code)) {
+            stream(out, p);
+        }
+
+        return inf_file;
+    }
+
+
     private static String ReplaceWithMallocScript(StringBuilder instruction, Stack<String> scopes, Stack<String> vars) {
         instruction = (instruction.charAt(0) == ' ') ? new StringBuilder(instruction.substring(1)) : instruction;
         String[] lhs = instruction.substring(0, instruction.indexOf("=")).split("[ ]+"); //get value and properties
@@ -176,111 +171,119 @@ final class Preprocessor {
         return instruction.toString();
     }
 
+    //converts an array of type T to a string that can be appended to the file
+    //it uses the compilation tokenizer so that reading from the file can be simple.
+    private static <T> String ARR_TO_STR(T[] arr) {
+        StringBuilder sb = new StringBuilder();
+        for (T element : arr) {
+            sb.append(element.toString()).append(PreprocessorFlags.tknzr);
+        }
+        return sb.toString();
+    }
+
     /**
-     * Compiles the source code into language and syntax that the executor can more easily understand.
+     * Takes in a file path, compiles instructions, creates a variable control JSON file, creates a instruction file preserving order of insertion.
      *
-     * @return Instruction File.
-     * @throws IOException When instruction file cannot be created.
+     * @author Krish Sridhar
+     * @see <a href=https://github.com/RuedigerMoeller/fast-serialization>Fast Serialization</a>
+     * @since 1.0
+     * <p>Date: February 24, 2021
      */
     @SuppressWarnings("all")
-    public static RandomAccessFile compile(File src_code) throws IOException, NoSuchFieldException, IllegalAccessException {
-        final long _start, _end;
+    private static final class Preprocessor {
+        public static Stack<Pair<FNode, StringBuilder>> preprocess(File src_code) throws IOException {
+            final long _start, _end;
+            RandomAccessFile inf_file = new RandomAccessFile("C:\\Users\\srikr\\Documents\\GitHub\\ADS-Project\\Files\\$instruction.txt", "rwd");
+            StringBuilder file = new StringBuilder(); //store in a string
 
-        RandomAccessFile inf_file = new RandomAccessFile("C:\\Users\\srikr\\Documents\\GitHub\\ADS-Project\\Files\\$instruction.txt", "rwd");
-        inf_file.seek(0);
-        FSTObjectOutput out = new FSTObjectOutput(new BufferedOutputStream(new FileOutputStream(inf_file.getFD())), fstc);
-        StringBuilder file = new StringBuilder(); //store in a string
-
-
-        _start = System.currentTimeMillis();
-        total:
-        {
-            Stack<Pair<FNode, StringBuilder>> methods = new Stack<>(); //stores most important parts of method (return type, method name, parameters, method body)
-            normalize:
+            _start = System.currentTimeMillis();
+            total:
             {
-                methods = normalize(src_code); //get rid of random bits of data that are insignificant
-                System.out.println(methods);
-            }
-            register:
-            {
-                Executor.setLibrarySize(methods.size());
-                System.out.println("Method count: " + methods.size() + "\n");
-            }
-            stream:
-            {
-                while (methods.size() > 0) {
-                    Pair<FNode, StringBuilder> m = methods.pop();
-                    stream(out, m);
+                Stack<Pair<FNode, StringBuilder>> methods; //stores most important parts of method (return type, method name, parameters, method body)
+                normalize:
+                {
+                    methods = normalize(src_code); //get rid of random bits of data that are insignificant
+                    Executor.setLibrarySize(methods.size());
+                    System.out.println(methods);
                 }
+                _end = System.currentTimeMillis();
+                System.out.println("Done... " + (_end - _start));
+                return methods;
             }
         }
-        _end = System.currentTimeMillis();
-        System.out.println("Done... " + (_end - _start));
-        return inf_file;
-    }
 
-    //normalizes source code file by removing extra spaces and comments then storing everything into a StringBuilder object
-    private static Stack<Pair<FNode, StringBuilder>> normalize(File src_code) throws IOException {
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(src_code));//read in file and store
-        Stack<Pair<FNode, StringBuilder>> methods = new Stack<>();
+        //you cant use me if you don't give me a file.
+        private Preprocessor() {
+        }
 
-        char c;
-        while ((c = (char) bis.read()) != '\uFFFF') {
-            switch (c) {
-                case PreprocessorFlags.comment_marker -> {
-                    do {
-                        c = (char) bis.read();
-                    } while (c != '\n' && c != PreprocessorFlags.comment_marker);
-                }
-                case PreprocessorFlags.mdelim -> {
-                    StringBuilder container = new StringBuilder();
 
-                    //contains properties, return type, function name, params
-                    while ((c = getOrIgnore(bis, c)) != '{') {
-                        container.append(c);
+        //normalizes source code file by removing extra spaces and comments then storing everything into a StringBuilder object
+        private static Stack<Pair<FNode, StringBuilder>> normalize(File src_code) throws IOException {
+            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(src_code));//read in file and store
+            Stack<Pair<FNode, StringBuilder>> methods = new Stack<>();
+
+            char c;
+            while ((c = (char) bis.read()) != '\uFFFF') {
+                switch (c) {
+                    case PreprocessorFlags.comment_marker -> {
+                        do {
+                            c = (char) bis.read();
+                        } while (c != '\n' && c != PreprocessorFlags.comment_marker);
                     }
+                    case PreprocessorFlags.mdelim -> {
+                        StringBuilder container = new StringBuilder();
 
-                    String[] properties = container.substring(1, container.indexOf("]")).split(",");
-                    System.out.println("Properties: " + Arrays.toString(properties));
-                    //find property in properties
-                    String return_type = container.substring(container.indexOf("]") + 1, container.indexOf(" "));
-                    System.out.println("Return type: " + return_type);
-                    String function_name = container.substring(container.indexOf(return_type) + return_type.length() + 1, container.indexOf("("));
-                    System.out.println("Function name: " + function_name);
-                    String[] params = container.substring(container.indexOf(function_name) + function_name.length() + 1, container.indexOf(")")).split(",");
-                    System.out.println("Parameters: " + Arrays.toString(params));
-
-                    FNode function = new FNode(function_name, properties, params, return_type);
-                    container.delete(0, container.length());
-
-                    int counter = 1;
-
-                    while ((c = getOrIgnore(bis, c)) != '\uFFFF') {
-                        if (c == '{') {
-                            ++counter;
-                        } else if (c == '}') {
-                            --counter;
-                            if (counter == 0) break;
+                        //contains properties, return type, function name, params
+                        while ((c = getOrIgnore(bis, c)) != '{') {
+                            container.append(c);
                         }
-                        container.append(c);
+
+                        String[] properties = container.substring(1, container.indexOf("]")).split(",");
+                        System.out.println("Properties: " + Arrays.toString(properties));
+                        //find property in properties
+                        String return_type = container.substring(container.indexOf("]") + 1, container.indexOf(" "));
+                        System.out.println("Return type: " + return_type);
+                        String function_name = container.substring(container.indexOf(return_type) + return_type.length() + 1, container.indexOf("("));
+                        System.out.println("Function name: " + function_name);
+                        String[] params = container.substring(container.indexOf(function_name) + function_name.length() + 1, container.indexOf(")")).split(",");
+                        System.out.println("Parameters: " + Arrays.toString(params));
+                        for (int i = 0, max = params.length; i < max; i++) {
+                            if (params[i].isEmpty()) continue;
+                            params[i] = params[i].substring(0, params[i].indexOf(" "));
+                        }
+
+                        FNode function = new FNode(function_name, properties, params, return_type);
+                        container.delete(0, container.length());
+
+                        int counter = 1;
+
+                        while ((c = getOrIgnore(bis, c)) != '\uFFFF') {
+                            if (c == '{') {
+                                ++counter;
+                            } else if (c == '}') {
+                                --counter;
+                                if (counter == 0) break;
+                            }
+                            container.append(c);
+                        }
+                        Pair<FNode, StringBuilder> pair = new Pair<>(function, container);
+                        methods.add(pair);
                     }
-                    Pair<FNode, StringBuilder> pair = new Pair<>(function, container);
-                    methods.add(pair);
                 }
             }
+            return methods;
         }
-        return methods;
-    }
 
-    private static char getOrIgnore(BufferedInputStream bis, char prev_char) throws IOException {
-        char c;
-        while ((c = (char) bis.read()) != '\uFFFF') {
-            if (c != '\t' && c != '\r' && c != '\n' && c != PreprocessorFlags.comment_marker) {
-                if (prev_char == ' ' && c == ' ')
-                    continue;
-                return c;
+        private static char getOrIgnore(BufferedInputStream bis, char prev_char) throws IOException {
+            char c;
+            while ((c = (char) bis.read()) != '\uFFFF') {
+                if (c != '\t' && c != '\r' && c != '\n' && c != PreprocessorFlags.comment_marker) {
+                    if (prev_char == ' ' && c == ' ')
+                        continue;
+                    return c;
+                }
             }
+            return c;
         }
-        return c;
     }
 }

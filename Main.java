@@ -1,5 +1,4 @@
-import Console.Terminal;
-import RuntimeManager.RuntimePool;
+import Kernel.RuntimeManager.RuntimePool;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -9,7 +8,7 @@ public class Main {
         try {
 //            Terminal.evoke();
             RandomAccessFile out = RuntimePool.compile(new File("C:\\Users\\srikr\\Documents\\GitHub\\ADS-Project\\Files\\$Input.txt"));
-            RuntimePool.execute(out);
+//            RuntimePool.execute(out);
         } catch (Exception e) {
             e.printStackTrace();
         }

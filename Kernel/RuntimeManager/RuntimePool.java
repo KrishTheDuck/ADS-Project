@@ -1,4 +1,4 @@
-package RuntimeManager;
+package Kernel.RuntimeManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,7 +66,7 @@ public class RuntimePool {
     //-------------------------------------------------------------
 
     public static RandomAccessFile compile(File file) throws IOException, NoSuchFieldException, IllegalAccessException {
-        return Preprocessor.compile(file);
+        return Compiler.compile(file);
     }
     //-------------------------------------------------------------
     //END OF PREPROCESSOR CODE

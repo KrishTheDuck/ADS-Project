@@ -1,4 +1,4 @@
-package RuntimeManager;
+package Kernel.RuntimeManager;
 
 import Kernel.Data_Structures.PairCollection;
 import Kernel.Datatypes.Data;

@@ -3,7 +3,7 @@ package Kernel.Datatypes;
 /**
  * Marker interface marks it as a viable data-wrapper which can be included in the RVM.
  *
- * @see RuntimeManager
+ * @see Kernel.RuntimeManager
  * Date: June 5, 2021
  */
 public abstract class Data implements Comparable<Data> {

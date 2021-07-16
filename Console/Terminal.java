@@ -1,6 +1,6 @@
 package Console;
 
-import RuntimeManager.RuntimePool;
+import Kernel.RuntimeManager.RuntimePool;
 
 import javax.swing.*;
 import java.awt.*;

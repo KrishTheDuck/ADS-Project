@@ -6,9 +6,9 @@ import Kernel.Datatypes.FloatString;
 import Kernel.Datatypes.IntString;
 import LanguageExceptions.FunctionNotFoundException;
 import LanguageExceptions.LibraryNotFoundException;
-import RuntimeManager.PreprocessorFlags;
-import RuntimeManager.RuntimePool;
-import RuntimeManager.SharedData;
+import Kernel.RuntimeManager.PreprocessorFlags;
+import Kernel.RuntimeManager.RuntimePool;
+import Kernel.RuntimeManager.SharedData;
 
 import java.util.ArrayList;
 import java.util.List;

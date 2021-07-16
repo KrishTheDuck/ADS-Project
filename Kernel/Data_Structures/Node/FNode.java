@@ -20,7 +20,7 @@ public class FNode extends AbstractNode {
 
     @Override
     public String toString() {
-        return super.name + " => properties: " + Arrays.toString(properties) + ", parameters: " + Arrays.toString(parameters) + ", return type: " + return_type;
+        return new String(this.name)  + " => properties: " + Arrays.toString(properties) + ", parameters: " + Arrays.toString(parameters) + ", return type: " + return_type;
     }
 
     @Override
@@ -30,6 +30,18 @@ public class FNode extends AbstractNode {
 
     public String return_type() {
         return this.return_type;
+    }
+
+    public String serialize() {
+        //function + parameters + properties
+        StringBuilder sb = new StringBuilder();
+        for (byte b : this.name) {
+            sb.append(b);
+        }
+
+        //todo serialization change
+
+        return "";
     }
 
     public String[] parameters() {

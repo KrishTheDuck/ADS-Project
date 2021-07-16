@@ -1,4 +1,4 @@
-package RuntimeManager;
+package Kernel.RuntimeManager;
 
 public final class PreprocessorFlags {
     public final static String tknzr = "  "; //stores the token that separates meaningful operation codes

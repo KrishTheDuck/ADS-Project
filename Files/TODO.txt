@@ -4,6 +4,7 @@ TODO:
     - Structs
     - add more functions to lang through FLibMapper
     - make variable detection not stupid
+    - FUNCTION CALLING DOESN'T WORK -> BETTER SIGNATURE CALLING AND DETECTION
 
 
 NOTEME:

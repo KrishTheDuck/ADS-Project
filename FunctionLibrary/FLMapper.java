@@ -4,7 +4,7 @@ import FunctionLibrary.Library.QuickMath;
 import FunctionLibrary.Library.StandardIO;
 import LanguageExceptions.FunctionNotFoundException;
 import LanguageExceptions.LibraryNotFoundException;
-import RuntimeManager.RuntimePool;
+import Kernel.RuntimeManager.RuntimePool;
 
 import java.util.Arrays;
 
@@ -14,6 +14,10 @@ public final class FLMapper {
         return switch (library.toLowerCase()) {
             case "stdio" -> StandardIO.map(function_name, args);
             case "qmth" -> QuickMath.map(function_name, args);
+            case "self" -> {
+
+                yield true;
+            }
             case "sys" -> switch (function_name) {
                 case "print" -> {
                     System.out.print("CONSOLE SAYS: " + args);

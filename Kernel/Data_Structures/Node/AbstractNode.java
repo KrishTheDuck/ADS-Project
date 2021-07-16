@@ -25,30 +25,21 @@ public abstract class AbstractNode implements Serializable {
     private static final long serialVersionUID = -2134534234124L;
     protected final byte[] serial;
     private final Queue<String> code = new LinkedList<>();
-    protected String name;
+    protected byte[] name;
     protected AbstractNode parent;
     protected List<AbstractNode> children;
 
     protected AbstractNode(String name, ArrayList<AbstractNode> children, AbstractNode parent) {
         byte[] serial1;
-        this.name = name;
+        this.name = name.getBytes();
         this.children = children;
         this.parent = parent;
         try {
-            serial1 = MessageDigest.getInstance("SHA-1").digest((this.name).getBytes());
+            serial1 = MessageDigest.getInstance("SHA-1").digest((this.name));
         } catch (NoSuchAlgorithmException ignored) {
             serial1 = new byte[0];
         }
         this.serial = serial1;
-    }
-
-    public static String serialize(String name) {
-        StringBuilder sb = new StringBuilder();
-        byte[] bytes = name.getBytes();
-        for (int i = 0, bytesLength = bytes.length; i < (bytesLength >> 2); i++) {
-            sb.append(bytes[i] & 0XFF + 0x100);
-        }
-        return sb.toString();
     }
 
     public final List<AbstractNode> children() {
@@ -56,11 +47,11 @@ public abstract class AbstractNode implements Serializable {
     }
 
     public final void setName(String name) {
-        this.name = name;
+        this.name = name.getBytes();
     }
 
     public final String name() {
-        return this.name;
+        return new String(this.name);
     }
 
     public final AbstractNode parent() {
@@ -109,7 +100,7 @@ public abstract class AbstractNode implements Serializable {
         //construct string
         StringBuilder sb = new StringBuilder();
         byte[] bytes = this.serial;
-        for (int i = 0, bytesLength = bytes.length; i < (bytesLength >> 2); i++) {
+        for (int i = 0, bytesLength = bytes.length >> 2; i < bytesLength; i++) {
             sb.append(bytes[i] & 0XFF + 0x100);
         }
         return sb.toString();

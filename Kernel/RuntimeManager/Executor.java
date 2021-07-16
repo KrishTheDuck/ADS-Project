@@ -1,4 +1,4 @@
-package RuntimeManager;
+package Kernel.RuntimeManager;
 
 import FunctionLibrary.FLMapper;
 import Kernel.Data_Structures.Node.AbstractNode;
@@ -22,7 +22,7 @@ import java.util.List;
  * Executes instruction file.
  *
  * @author Krish Sridhar
- * @see Preprocessor
+ * @see Compiler
  * @since 1.0
  * Date: March 2021
  */
@@ -38,18 +38,12 @@ final class Executor {
             case "mal" -> { //mal <properties> <name> <value> OR mal <properties> <name> call <library> <function_name> <args>
                 //properties
                 String[] properties = instructions[1].split(" ");
-                String value;
-                if (instructions[3].equals("call")) {
-                    value = UniversalParser.function_evaluate(instructions[4]);
-//                    value = FLMapper.mapFunctionToExecution(instructions[4], instructions[5], (instructions.length == 7) ? instructions[6] : "").toString();
-                } else {
-                    value = UniversalParser.ReplaceWithValue(instructions[3].split(" "));
-                }
+                String value = instructions[3].equals("call") ? UniversalParser.function_evaluate(instructions[4]) : UniversalParser.ReplaceWithValue(instructions[3].split(" "));
                 RuntimePool.commit(instructions[2], properties[properties.length - 1], UniversalParser.evaluate(value), properties);
             }
             case "set" -> {
-                instructions[2] = UniversalParser.ReplaceWithValue(instructions[2].split(" "));
-                System.out.println(instructions[2]);
+                instructions[1] = UniversalParser.ReplaceWithValue(instructions[1].split(" "));
+                System.out.println(instructions[1]);
                 RuntimePool.setValue(instructions[1], UniversalParser.evaluate(instructions[2]));
             }
             //library, function name, args
@@ -82,18 +76,19 @@ final class Executor {
     public static void execute(RandomAccessFile f) throws Exception {
         f.seek(0);
         FSTObjectInput ois = new FSTObjectInput(new BufferedInputStream(new FileInputStream(f.getFD())));
-
+        System.out.println("Serial: " + SharedData.MAIN_CODE);
         long _start, _end;
         _start = System.currentTimeMillis();
         for (int i = 0; i < length; i++) {
             AbstractNode ast = readObjectFromStream(ois);
-            library.add(ast.name(), ast);
+            library.add(ast.serial(), ast);
         }
         _end = System.currentTimeMillis();
         System.out.println("Load time: " + (_end - _start));
 
         _start = System.currentTimeMillis();
-        search(library.getPairFromKey("10511011632109").value());
+        SharedData.library = library;
+        search(library.getPairFromKey(SharedData.MAIN_CODE).value());
         _end = System.currentTimeMillis();
         System.out.println("Execution time: " + (_end - _start));
     }
@@ -108,7 +103,7 @@ final class Executor {
                 while (len > 0) {
                     len -= inputStream.read(buffer, buffer.length - len, len);
                 }
-                return (AbstractNode) Preprocessor.fstc.getObjectInput(buffer).readObject(AbstractNode.class);
+                return (AbstractNode) Compiler.fstc.getObjectInput(buffer).readObject(AbstractNode.class);
             }
         } catch (Exception e) {
             error = e.getCause();
